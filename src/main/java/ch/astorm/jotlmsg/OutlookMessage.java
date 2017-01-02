@@ -178,6 +178,13 @@ public class OutlookMessage {
         attachments.remove(attachment);
     }
     
+    /**
+     * Removes all the attachments from this message.
+     */
+    public void removeAllAttachments() {
+        attachments.clear();
+    }
+    
     private void parseMAPIMessage(MAPIMessage mapiMessage) {
         silent(() -> { parseSubject(mapiMessage); });
         silent(() -> { parseTextBody(mapiMessage); });
