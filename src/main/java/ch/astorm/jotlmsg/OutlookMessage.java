@@ -2,15 +2,24 @@
 package ch.astorm.jotlmsg;
 
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.poi.hsmf.MAPIMessage;
+import org.apache.poi.hsmf.datatypes.AttachmentChunks;
+import org.apache.poi.hsmf.datatypes.RecipientChunks;
+import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 
 /**
  * Represents an Outlook message.
+ * <p>This class is meant to be a very simple and easy-to-use API to read and create
+ * {@code .msg} files for Microsoft Outlook.</p>
  * 
  * @author Cedric Tabin
  */
@@ -21,6 +30,41 @@ public class OutlookMessage {
     private final Map<Type, List<OutlookMessageRecipient>> recipients = new EnumMap<>(Type.class);
     private final List<OutlookMessageAttachment> attachments = new ArrayList<>(8);
 
+    /**
+     * Creates a new empty message.
+     */
+    public OutlookMessage() {}
+    
+    /**
+     * Creates a new message with the data of the specified {@code mapiMessageInputStream}.
+     * 
+     * @param mapiMessageInputStream The source message data.
+     * @throws IOException If an I/O error occurs.
+     */
+    public OutlookMessage(InputStream mapiMessageInputStream) throws IOException {
+        this(new MAPIMessage(mapiMessageInputStream));
+    }
+    
+    /**
+     * Creates a new message with the data of the specified {@code mapiMessageFile}.
+     * 
+     * @param mapiMessageFile The source message data.
+     * @throws IOException If an I/O error occurs.
+     */
+    public OutlookMessage(File mapiMessageFile) throws IOException {
+        this(new MAPIMessage(mapiMessageFile));
+    }
+    
+    /**
+     * Creates a new message with the data of the specified {@code mapiMessage}.
+     * All the data will be copied from the source message and the latter can be then discarded.
+     * 
+     * @param mapiMessage The source message data.
+     */
+    public OutlookMessage(MAPIMessage mapiMessage) {
+        parseMAPIMessage(mapiMessage);
+    }
+    
     /**
      * Defines the subject of the message.
      * This value may be null.
@@ -123,5 +167,75 @@ public class OutlookMessage {
         OutlookMessageAttachment attachment = new OutlookMessageAttachment(name, input);
         attachments.add(attachment);
         return attachment;
+    }
+    
+    /**
+     * Removes the specified attachment from this message.
+     * 
+     * @param attachment The attachment to remove.
+     */
+    public void removeAttachment(OutlookMessageAttachment attachment) {
+        attachments.remove(attachment);
+    }
+    
+    private void parseMAPIMessage(MAPIMessage mapiMessage) {
+        silent(() -> { parseSubject(mapiMessage); });
+        silent(() -> { parseTextBody(mapiMessage); });
+        silent(() -> { parseRecipients(mapiMessage); });
+        silent(() -> { parseAttachments(mapiMessage); });
+    }
+    
+    /**
+     * Parses the subject from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     */
+    protected void parseSubject(MAPIMessage mapiMessage) throws ChunkNotFoundException { 
+        this.subject = mapiMessage.getSubject();
+    }
+    
+    /**
+     * Parses the text body from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     */
+    protected void parseTextBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        this.plainTextBody = mapiMessage.getTextBody();
+    }
+    
+    /**
+     * Parses the recipients from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     */
+    protected void parseRecipients(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        RecipientChunks[] recipientChunks = mapiMessage.getRecipientDetailsChunks();
+        for(RecipientChunks recipientChunk : recipientChunks) {
+            String name = recipientChunk.getRecipientName();
+            String email = recipientChunk.getRecipientEmailAddress();
+            addRecipient(Type.TO, email, name);
+        }
+    }
+    
+    /**
+     * Parses the attachments from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     */
+    protected void parseAttachments(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        AttachmentChunks[] attachmentChunks = mapiMessage.getAttachmentFiles();
+        for(AttachmentChunks attachmentChunk : attachmentChunks) {
+            String name = attachmentChunk.attachLongFileName!=null ? attachmentChunk.attachLongFileName.getValue() :
+                          attachmentChunk.attachFileName!=null ? attachmentChunk.attachFileName.getValue() :
+                                                                 attachmentChunk.getPOIFSName();
+            InputStream data = attachmentChunk.attachData!=null ? new ByteArrayInputStream(attachmentChunk.attachData.getValue()) : null;
+            addAttachment(name, data);
+        }
+    }
+    
+    private boolean silent(SilentCallFailure call) {
+        try { call.invoke(); }
+        catch(ChunkNotFoundException ignored) { return false; }
+        return true;
+    }
+    
+    private static interface SilentCallFailure {
+        void invoke() throws ChunkNotFoundException;
     }
 }
