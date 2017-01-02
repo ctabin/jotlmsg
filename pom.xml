@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>ch.astorm.jotlmsg</groupId>
+  <artifactId>jotlmsg</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0.0</version>
+  <name>jotlmsg</name>
+  <url>http://www.astorm.ch</url>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <centaurus.version>1.0-SNAPSHOT</centaurus.version>
+  </properties>
+  <build>
+    <plugins>
+      <!-- Makes the JAR runnable -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>ch.astorm.jconvmsg.MailConverter</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <!-- Copies the dependencies -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>package</phase>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <overWriteReleases>false</overWriteReleases>
+              <overWriteSnapshots>false</overWriteSnapshots>
+              <overWriteIfNewer>true</overWriteIfNewer>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Compilation with the JDK 1.8 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <!-- javax.mail API -->
+    <dependency>
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+      <version>1.4.7</version>
+    </dependency>
+    <!-- Apache POI -->
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi</artifactId>
+      <version>3.15</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-scratchpad</artifactId>
+      <version>3.15</version>
+    </dependency>
+    <!-- Apache commons IO -->
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>2.4</version>
+    </dependency>
+    <!-- JUnit -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
