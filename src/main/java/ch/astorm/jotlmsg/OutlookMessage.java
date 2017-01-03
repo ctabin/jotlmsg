@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
+import org.apache.poi.hsmf.datatypes.MAPIProperty;
+import org.apache.poi.hsmf.datatypes.PropertyValue;
 import org.apache.poi.hsmf.datatypes.RecipientChunks;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 
@@ -198,6 +200,8 @@ public class OutlookMessage {
      */
     protected void parseSubject(MAPIMessage mapiMessage) throws ChunkNotFoundException { 
         this.subject = mapiMessage.getSubject();
+        if(subject!=null) { this.subject = subject.trim(); }
+        if(subject!=null && subject.isEmpty()) { this.subject = null; }
     }
     
     /**
@@ -206,6 +210,8 @@ public class OutlookMessage {
      */
     protected void parseTextBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         this.plainTextBody = mapiMessage.getTextBody();
+        if(plainTextBody!=null) { this.plainTextBody = plainTextBody.trim(); }
+        if(plainTextBody!=null && plainTextBody.isEmpty()) { this.plainTextBody = null; }
     }
     
     /**
@@ -217,7 +223,21 @@ public class OutlookMessage {
         for(RecipientChunks recipientChunk : recipientChunks) {
             String name = recipientChunk.getRecipientName();
             String email = recipientChunk.getRecipientEmailAddress();
-            addRecipient(Type.TO, email, name);
+            
+            if(name!=null && email!=null && name.equals(email)) {
+                name = null;
+            }
+            
+            Type type = Type.TO;
+            List<PropertyValue> values = recipientChunk.getProperties().get(MAPIProperty.RECIPIENT_TYPE);
+            if(values!=null && !values.isEmpty()) { 
+                int value = (int)values.get(0).getValue();
+                if(value==1) { type = Type.TO; }
+                else if(value==2) { type = Type.CC; }
+                else if(value==3) { type = Type.BCC; }
+            }
+            
+            addRecipient(type, email, name);
         }
     }
     
