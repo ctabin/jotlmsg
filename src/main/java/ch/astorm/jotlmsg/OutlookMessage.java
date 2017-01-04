@@ -8,9 +8,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import javax.activation.DataHandler;
+import javax.mail.Address;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.util.ByteArrayDataSource;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
 import org.apache.poi.hsmf.datatypes.MAPIProperty;
@@ -93,6 +103,18 @@ public class OutlookMessage {
     public List<OutlookMessageRecipient> getRecipients(Type type) { return Collections.unmodifiableList(recipients.getOrDefault(type, new ArrayList<>(0))); }
     
     /**
+     * Returns all the recipients of this message. If there is no recipient, an empty
+     * list will be returned.
+     * 
+     * @return A new list with all the recipients.
+     */
+    public List<OutlookMessageRecipient> getAllRecipients() {
+        List<OutlookMessageRecipient> allRecipients = new ArrayList<>(16);
+        recipients.forEach((k,v) -> allRecipients.addAll(v));
+        return allRecipients;
+    }
+    
+    /**
      * Creates and add a new {@code OutlookMessageRecipient} to this message.
      * 
      * @param type The type.
@@ -121,6 +143,7 @@ public class OutlookMessage {
      * @param recipient The recipient to add.
      */
     public void addRecipient(OutlookMessageRecipient recipient) { 
+        if(recipient==null) { throw new IllegalArgumentException("recipient is not defined"); }
         List<OutlookMessageRecipient> typeRecipients = recipients.get(recipient.getType());
         if(typeRecipients==null) {
             typeRecipients = new ArrayList<>(31);
@@ -162,13 +185,24 @@ public class OutlookMessage {
      * data after the attachment creation.
      * 
      * @param name The name.
-     * @param input The input data or null.
+     * @param mimeType The MIME type.
+     * @param input The input data.
      * @return The created attachment.
      */
-    public OutlookMessageAttachment addAttachment(String name, InputStream input) {
-        OutlookMessageAttachment attachment = new OutlookMessageAttachment(name, input);
-        attachments.add(attachment);
+    public OutlookMessageAttachment addAttachment(String name, String mimeType, InputStream input) {
+        OutlookMessageAttachment attachment = new OutlookMessageAttachment(name, mimeType, input);
+        addAttachment(attachment);
         return attachment;
+    }
+    
+    /**
+     * Add a new attachment to this message. 
+     * 
+     * @param attachment The attachment.
+     */
+    public void addAttachment(OutlookMessageAttachment attachment) {
+        if(attachment==null) { throw new IllegalArgumentException("attachment is not defined"); }
+        attachments.add(attachment);
     }
     
     /**
@@ -185,6 +219,74 @@ public class OutlookMessage {
      */
     public void removeAllAttachments() {
         attachments.clear();
+    }
+    
+    /**
+     * Creates a new {@code MimeMessage} from this {@code OutlookMessage}.
+     * A new {@link Session} will be created with an empty {@code Properties} instance.
+     * 
+     * @return A new {@code MimeMessage} instance.
+     * @see #toMimeMessage(java.util.Properties)
+     */
+    public MimeMessage toMimeMessage() throws IOException, MessagingException {
+        return toMimeMessage(new Properties());
+    }
+    
+    /**
+     * Creates a new {@code MimeMessage} from this {@code OutlookMessage}.
+     * A new {@link Session} will be created with the specified {@code sessionProps}.
+     * 
+     * @param sessionProps The {@code Session} properties.
+     * @return A new {@code MimeMessage} instance.
+     * @see #toMimeMessage(javax.mail.Session) 
+     */
+    public MimeMessage toMimeMessage(Properties sessionProps) throws IOException, MessagingException {
+        Session session = Session.getInstance(sessionProps);
+        return toMimeMessage(session);
+    }
+    
+    /**
+     * Creates a new {@code MimeMessage} from this {@code OutlookMessage}.
+     * This method will generate a multipart/mixed {@code MimeMessage}, with the first
+     * part being the message body (named 'body').
+     * 
+     * @param session The {@code Session} to use for message creation.
+     * @return A new {@code MimeMessage} instance.
+     */
+    public MimeMessage toMimeMessage(Session session) throws IOException, MessagingException {
+        MimeMessage message = new MimeMessage(session);
+        message.setSentDate(new Date());
+        
+        String subject = getSubject();
+        if(subject!=null) { message.setSubject(subject); }
+        
+        for(OutlookMessageRecipient recipient : getAllRecipients()) {
+            Address address = recipient.getAddress();
+            if(address!=null) { message.addRecipient(recipient.getType().getRecipientType(), address); }
+        }
+        
+        MimeMultipart multipart = new MimeMultipart();
+        
+        String plainText = getPlainTextBody();
+        if(plainText!=null) {
+            MimeBodyPart body = new MimeBodyPart();
+            body.setFileName("body");
+            body.setText(getPlainTextBody(), "UTF-8", "plain");
+            multipart.addBodyPart(body);
+        }
+        
+        for(OutlookMessageAttachment attachment : getAttachments()) {
+            InputStream inputStream = attachment.getNewInputStream();
+            if(inputStream!=null) { 
+                MimeBodyPart part = new MimeBodyPart();
+                part.setDataHandler(new DataHandler(new ByteArrayDataSource(inputStream, attachment.getMimeType())));
+                part.setFileName(attachment.getName());
+                multipart.addBodyPart(part);
+            }
+        }
+        
+        message.setContent(multipart);
+        return message;
     }
     
     private void parseMAPIMessage(MAPIMessage mapiMessage) {
@@ -252,7 +354,8 @@ public class OutlookMessage {
                           attachmentChunk.attachFileName!=null ? attachmentChunk.attachFileName.getValue() :
                                                                  attachmentChunk.getPOIFSName();
             InputStream data = attachmentChunk.attachData!=null ? new ByteArrayInputStream(attachmentChunk.attachData.getValue()) : null;
-            addAttachment(name, data);
+            String mimeType = attachmentChunk.attachMimeTag!=null ? attachmentChunk.attachMimeTag.getValue() : null;
+            addAttachment(name, mimeType, data);
         }
     }
     

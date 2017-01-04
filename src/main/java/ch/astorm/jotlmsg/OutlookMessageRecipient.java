@@ -1,6 +1,12 @@
 
 package ch.astorm.jotlmsg;
 
+import javax.mail.Address;
+import javax.mail.Message;
+import javax.mail.Message.RecipientType;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+
 /**
  * Represents a recipient.
  * 
@@ -15,17 +21,28 @@ public class OutlookMessageRecipient {
         /**
          * The main recipient.
          */
-        TO,
+        TO(RecipientType.TO),
         
         /**
          * The recipient that will receive a copy.
          */
-        CC,
+        CC(RecipientType.CC),
         
         /**
          * The recipient that will receive a carbon copy.
          */
-        BCC
+        BCC(RecipientType.BCC);
+        
+        private RecipientType rt;
+        private Type(RecipientType rt) { this.rt = rt; }
+        
+        /**
+         * Returns the corresponding {@code RecipientType} from the {@link Message}
+         * API.
+         * 
+         * @return The recipient type.
+         */
+        RecipientType getRecipientType() { return rt; }
     }
     
     private final Type type;
@@ -78,4 +95,16 @@ public class OutlookMessageRecipient {
      */
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+    
+    /**
+     * Returns a new {@code Address} from the email of this recipient. If the email
+     * is not defined, this method returns null.
+     * 
+     * @return A new {@code InternetAddress}.
+     * @throws AddressException If the email is not valid.
+     */
+    public Address getAddress() throws AddressException {
+        if(email==null || email.isEmpty()) { return null; }
+        return new InternetAddress(email);
+    }
 }

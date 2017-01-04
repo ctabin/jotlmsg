@@ -1,7 +1,10 @@
 
 package ch.astorm.jotlmsg;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import org.apache.poi.util.IOUtils;
 
 /**
  * Represents a message attachment.
@@ -10,19 +13,89 @@ import java.io.InputStream;
  */
 public class OutlookMessageAttachment {
     private final String name;
-    private InputStream inputStream;
+    private String mimeType;
+    private InputStreamCreator inputStreamCreator;
+    
+    /**
+     * Represents an {@code InputStream} creator.
+     */
+    public static interface InputStreamCreator {
+        
+        /**
+         * Creates a new {@code InputStream} for the specified {@code OutlookMessageAttachment}.
+         * 
+         * @param omt The attachment.
+         * @return A new {@code InputStream}.
+         * @throws IOException If an I/O error occurs.
+         */
+        InputStream newInputStream(OutlookMessageAttachment omt) throws IOException;
+    }
+    
+    /**
+     * Wraps the creation of an {@code InputStream} from a given source {@code InputStream}.
+     * The content of the source {@code InputStream} will be stored in-memory.
+     */
+    public static class MemoryInputStreamCreator implements InputStreamCreator {
+        private InputStream source;
+        private byte[] content;
+        
+        /**
+         * Creates a new {@code MemoryInputStreamCreator} with the specified {@code source}.
+         * 
+         * @param source The source.
+         */
+        public MemoryInputStreamCreator(InputStream source) {
+            if(source==null) { throw new IllegalArgumentException("source is not defined"); }
+            this.source = source;
+        }
+        
+        /**
+         * Reads a new {@code InputStream} with the content of the source.
+         * The first time this method is called, the source {@code InputStream} will be fully
+         * read and stored in-memory. Then, a new {@code ByteArrayInputStream} is
+         * returned.
+         * 
+         * @param omt The attachment.
+         * @return A new {@code ByteArrayInputStream}.
+         * @throws IOException If an I/O error occurs.
+         */
+        @Override
+        public InputStream newInputStream(OutlookMessageAttachment omt) throws IOException {
+            if(content==null) { 
+                content = IOUtils.toByteArray(source); 
+                source = null;
+            }
+            return new ByteArrayInputStream(content);
+        }
+    }
     
     /**
      * Creates a new {@code OutlookMessageAttachment} with the specified parameters.
      * 
      * @param name The attachment's name.
-     * @param input The input data or null.
+     * @param mimeType The MIME type of the attachment.
+     * @param creator The {@code InputStreamCreator} or null.
      */
-    public OutlookMessageAttachment(String name, InputStream input) {
+    public OutlookMessageAttachment(String name, String mimeType, InputStreamCreator creator) {
         if(name==null || name.trim().isEmpty()) { throw new IllegalArgumentException("name is not defined"); }
         
         this.name = name;
-        this.inputStream = input;
+        this.mimeType = mimeType;
+        this.inputStreamCreator = creator;
+    }
+    
+    /**
+     * Creates a new {@code OutlookMessageAttachment} with the specified parameters.
+     * A new {@code MemoryInputStreamCreator} will be created with the specified {@code input}
+     * as source.
+     * 
+     * @param name The attachment's name.
+     * @param mimeType The MIME type of the attachment.
+     * @param input The input or null.
+     * @see MemoryInputStreamCreator
+     */
+    public OutlookMessageAttachment(String name, String mimeType, InputStream input) {
+        this(name, mimeType, input!=null ? new MemoryInputStreamCreator(input) : null);
     }
     
     /**
@@ -34,11 +107,29 @@ public class OutlookMessageAttachment {
     public final String getName() { 
         return name; 
     }
+
+    /**
+     * Defines the MIME type of the attachment.
+     */
+    public String getMimeType() { return mimeType; }
+    public void setMimeType(String mimeType) { this.mimeType = mimeType; }
     
     /**
-     * Defines the {@code InputStream} to use to access this attachment data.
+     * Defines the {@code InputStreamCreator} that handles the attachment content.
      * This value may be null.
      */
-    public InputStream getInputStream() { return inputStream; }
-    public void setInputStream(InputStream is) { this.inputStream = is; }
+    public InputStreamCreator getInputStreamCreator() { return inputStreamCreator; }
+    public void setInputStreamCreator(InputStreamCreator is) { this.inputStreamCreator = is; }
+    
+    /**
+     * Returns a new {@code InputStream} to read the content of this attachment.
+     * 
+     * @return A new {@code InputStream}.
+     * @throws IOException If an I/O error occurs.
+     * @see InputStreamCreator#newInputStream(ch.astorm.jotlmsg.OutlookMessageAttachment)
+     */
+    public InputStream getNewInputStream() throws IOException {
+        if(inputStreamCreator==null) { throw new IllegalStateException("missing input stream creator"); }
+        return inputStreamCreator.newInputStream(this);
+    }
 }

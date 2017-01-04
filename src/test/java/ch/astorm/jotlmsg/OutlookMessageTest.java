@@ -20,7 +20,7 @@ public class OutlookMessageTest {
         message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
         message.addRecipient(Type.TO, "ctabin@jotlmsg.com");
         message.addRecipient(Type.CC, "cc@jotlmsg.com", "Copy");
-        message.addAttachment("Empty file", null);
+        message.addAttachment("Empty file", "text/plain", null);
         
         assertEquals("This is a message", message.getSubject());
         assertEquals("Hello,\n\nThis is a simple message.\n\n.Bye.", message.getPlainTextBody());
@@ -35,7 +35,7 @@ public class OutlookMessageTest {
         assertNull(message.getRecipients(Type.TO).get(1).getName());
         assertEquals(1, message.getAttachments().size());
         assertEquals("Empty file", message.getAttachments().get(0).getName());
-        assertNull(message.getAttachments().get(0).getInputStream());
+        assertNull(message.getAttachments().get(0).getInputStreamCreator());
         
         message.removeAllRecipients(Type.TO);
         assertEquals(0, message.getRecipients(Type.TO).size());
@@ -94,7 +94,7 @@ public class OutlookMessageTest {
         
         assertEquals("myAttachement.txt", message.getAttachments().get(0).getName());
         
-        String data = IOUtils.toString(message.getAttachments().get(0).getInputStream(), "UTF-8");
+        String data = IOUtils.toString(message.getAttachments().get(0).getNewInputStream(), "UTF-8");
         assertEquals("This is some basic content of attached file.", data);
     }
 }
