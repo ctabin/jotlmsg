@@ -3,7 +3,6 @@ package ch.astorm.jotlmsg;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 import org.apache.poi.util.IOUtils;
