@@ -5,10 +5,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.apache.poi.hsmf.datatypes.ChunkBasedPropertyValue;
@@ -35,16 +35,7 @@ public class PropertiesChunk {
     public static final int FLAG_WRITEABLE = 4;
     
     private Map<MAPIProperty, PropertyValue> properties = new HashMap<MAPIProperty, PropertyValue>();
-    private boolean containsStorageAttachment;
-    
-    /**
-     * Defines if there is a storage attachment. This will change how the size of variable-length
-     * properties are set.
-     * See specification, page 25
-     */
-    public boolean containsStorageAttachment() { return containsStorageAttachment; }
-    public void setConstainsStorageAttachment(boolean v) { containsStorageAttachment = v; }
-    
+
     /**
      * Defines a property. Multi-valued properties are not (yet?) supported.
      */
@@ -80,7 +71,7 @@ public class PropertiesChunk {
     protected void writeNodeData(DirectoryEntry directory, List<PropertyValue> values) throws IOException {
         for(PropertyValue value : values) {
             byte[] bytes = (byte[])value.getValue();
-            String nodeName = PREFIX+value.getProperty().asFileName();
+            String nodeName = PREFIX+getFileName(value.getProperty());
             directory.createDocument(nodeName, new ByteArrayInputStream(bytes));
         }
     }
@@ -102,11 +93,11 @@ public class PropertiesChunk {
             
             //generic header
             //page 23, point 2.4.2
-            int tag = Integer.parseInt(property.asFileName(), 16); //tag is the property id and its type
+            int tag = Integer.parseInt(getFileName(property), 16); //tag is the property id and its type
             LittleEndian.putUInt(tag, out);
             LittleEndian.putUInt(value.getFlags(), out); //readable + writable
-            
-            MAPIType type = getType(property);
+
+            MAPIType type = getTypeMapping(property.usualType);
             if(type.isFixedLength()) { writeFixedLengthValueHeader(out, property, type, value); } //page 11, point 2.1.2
             else { //page 12, point 2.1.3
                 writeVariableLengthValueHeader(out, property, type, value); 
@@ -121,42 +112,42 @@ public class PropertiesChunk {
         //page 24, point 2.4.2.1.1
         byte[] bytes = (byte[])value.getValue(); //always return the bytes array
         int length = bytes!=null ? bytes.length : 0;
-        if(bytes!=null) { out.write(bytes); }
+        if(bytes!=null) { 
+            //because little endian
+            byte[] reversed = new byte[bytes.length];
+            for(int i=0 ; i<bytes.length ; ++i) { reversed[bytes.length-i-1] = bytes[i]; }
+            out.write(reversed);
+        }
         out.write(new byte[8-length]);
     }
     
     private void writeVariableLengthValueHeader(OutputStream out, MAPIProperty property, MAPIType type, PropertyValue value) throws IOException {
         //variable length header
         //page 24, point 2.4.2.2
-        if(!containsStorageAttachment) {
-            byte[] bytes = (byte[])value.getValue(); //always return the bytes array
-            int length = bytes!=null ? bytes.length : 0;
+        byte[] bytes = (byte[])value.getValue(); //always return the bytes array
+        int length = bytes!=null ? bytes.length : 0;
 
-            //alter the length, as specified in page 25
-            if(type==Types.UNICODE_STRING) { length += 2; }
-            else if(type==Types.ASCII_STRING) { length += 1; }
+        //alter the length, as specified in page 25
+        if(type==Types.UNICODE_STRING) { length += 2; }
+        else if(type==Types.ASCII_STRING) { length += 1; }
 
-            LittleEndian.putUInt(length, out);
-        } else {
-            LittleEndian.putUInt(0xFFFFFFFF, out);
-        }
+        LittleEndian.putUInt(length, out);
         
         //specified in page 25
-        if(containsStorageAttachment) { LittleEndian.putInt(0x04, out); }
-        //else if(containsEmbeddedMessage) { LittleEndian.putInt(0x01, out); } //not supported
-        else { LittleEndian.putUInt(0, out); }
+        LittleEndian.putUInt(0, out);
     }
     
-    /*
-    Unfortunately, there is no way to access the type in MAPIProperty yet. Hence we
-    get it through reflection.
-    */
-    private MAPIType getType(MAPIProperty property) {
-        try {
-            Field usualType = property.getClass().getDeclaredField("usualType");
-            return (MAPIType)usualType.get(property);
-        } catch(Exception e) {
-            throw new RuntimeException("unable to retrieve type of property "+property, e);
+    private String getFileName(MAPIProperty property) {
+        String str = Integer.toHexString(property.id).toUpperCase(Locale.ROOT);
+        while(str.length() < 4) {
+            str = "0" + str;
         }
+        
+        MAPIType type = getTypeMapping(property.usualType);
+        return str + type.asFileEnding();
+    }
+    
+    private MAPIType getTypeMapping(MAPIType type) {
+        return type==Types.ASCII_STRING ? Types.UNICODE_STRING : type;
     }
 }

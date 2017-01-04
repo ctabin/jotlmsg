@@ -3,8 +3,11 @@ package ch.astorm.jotlmsg;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 import org.apache.poi.util.IOUtils;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
@@ -27,6 +30,7 @@ public class OutlookMessageMSGTest {
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
 
         testMessage(message);
+        testBinary(message, "generated/base-message.msg");
     }
     
     @Test
@@ -39,7 +43,7 @@ public class OutlookMessageMSGTest {
         message.addRecipient(OutlookMessageRecipient.Type.TO, "ctabin@jotlmsg.com");
         message.addRecipient(OutlookMessageRecipient.Type.CC, "cc@jotlmsg.com", "Copy");
         message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes("UTF-8")));
-        
+
         testMessage(message);
     }
     
@@ -49,14 +53,19 @@ public class OutlookMessageMSGTest {
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric <djoy@me.com>");
         message.addRecipient(OutlookMessageRecipient.Type.TO, "ctabin@jotlmsg.com");
-        message.addRecipient(OutlookMessageRecipient.Type.CC, "cc@jotlmsg.com", "Copy");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "ctabin2@jotlmsg.com");
+        message.addRecipient(OutlookMessageRecipient.Type.CC, "cc@jotlmsg.com");
+        message.addRecipient(OutlookMessageRecipient.Type.CC, "cc2@jotlmsg.com", "John");
+        message.addRecipient(OutlookMessageRecipient.Type.CC, "cc3@jotlmsg.com");
+        message.addRecipient(OutlookMessageRecipient.Type.BCC, "bcc@jotlmsg.com");
         message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes("UTF-8")));
         message.addAttachment("message2.txt", "text/plain", new ByteArrayInputStream("Another attachment with content".getBytes("UTF-8")));
         message.addAttachment("message3.txt", "text/html", new ByteArrayInputStream("<html><body>Some html page</body></html>".getBytes("UTF-8")));
         
         testMessage(message);
+        testBinary(message, "generated/with-attachments-2.msg");
     }
     
     @Test
@@ -70,6 +79,14 @@ public class OutlookMessageMSGTest {
         message.addRecipient(OutlookMessageRecipient.Type.CC, "cc@jotlmsg.com", "Copy");
 
         testMessage(message);
+        testBinary(message, "generated/without-attachment.msg");
+    }
+    
+    private void testBinary(OutlookMessage message, String resPath) throws Exception {
+        InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath);
+        OutlookMessage source = new OutlookMessage(is);
+        compareMessage(source, message);
+        is.close();
     }
     
     private void testMessage(OutlookMessage source) throws Exception {
@@ -83,12 +100,15 @@ public class OutlookMessageMSGTest {
         baos2.close();
         
         OutlookMessage parsed = new OutlookMessage(new ByteArrayInputStream(baos2.toByteArray()));
-        
-        assertEquals(source.getSubject(), parsed.getSubject());
-        assertEquals(source.getFrom(), parsed.getFrom());
-        assertEquals(source.getPlainTextBody(), parsed.getPlainTextBody());
-        assertEquals(source.getAllRecipients().size(), parsed.getAllRecipients().size());
-        assertEquals(source.getAttachments().size(), parsed.getAttachments().size());
+        compareMessage(source, parsed);
+    }
+    
+    private void compareMessage(OutlookMessage source, OutlookMessage other) throws Exception {
+        assertEquals(source.getSubject(), other.getSubject());
+        assertEquals(source.getFrom(), other.getFrom());
+        assertEquals(source.getPlainTextBody(), other.getPlainTextBody());
+        assertEquals(source.getAllRecipients().size(), other.getAllRecipients().size());
+        assertEquals(source.getAttachments().size(), other.getAttachments().size());
         
         List<OutlookMessageRecipient> srcRecipients = source.getAllRecipients();
         List<OutlookMessageRecipient> parsedRecipients = source.getAllRecipients();
@@ -111,7 +131,7 @@ public class OutlookMessageMSGTest {
             byte[] srcData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
             byte[] parData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
             assertEquals(srcData.length, parData.length);
-            assertEquals(new String(srcData, "UTF-8"), new String(parData, "UTF-8"));
+            assertArrayEquals(srcData, parData);
         }
     }
 }

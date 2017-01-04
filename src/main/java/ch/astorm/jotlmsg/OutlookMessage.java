@@ -40,6 +40,7 @@ import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 import org.apache.poi.poifs.filesystem.DirectoryEntry;
 import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
 import org.apache.poi.util.IOUtils;
+import org.apache.poi.util.LittleEndian;
 import org.apache.poi.util.StringUtil;
 
 /**
@@ -370,11 +371,13 @@ public class OutlookMessage {
         MessagePropertiesChunk topLevelChunk = new MessagePropertiesChunk();
         topLevelChunk.setAttachmentCount(attachments.size());
         topLevelChunk.setRecipientCount(recipients.size());
-        topLevelChunk.setNextAttachmentId(attachments.isEmpty() ? 0 : 1);
-        topLevelChunk.setNextRecipientId(recipients.isEmpty() ? 0 : 1);
-        topLevelChunk.setConstainsStorageAttachment(!attachments.isEmpty() || !recipients.isEmpty());
-        
+        topLevelChunk.setNextAttachmentId(attachments.size()); //actually indicates the next free id !
+        topLevelChunk.setNextRecipientId(recipients.size()); //actually indicates the next free id !
+
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.STORE_SUPPORT_MASK, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0x00040000).array())); //all the strings will be in unicode
+        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_CLASS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("IPM.Note"))); //outlook message
+        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); //unsent message
+        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.HASATTACH, FLAG_READABLE | FLAG_WRITEABLE, attachments.isEmpty() ? new byte[]{0} : new byte[]{1}));
         if(subject!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SUBJECT, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(subject))); }
         if(body!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(body))); }
         if(from!=null) { 
@@ -391,17 +394,32 @@ public class OutlookMessage {
             
             String name = recipient.getName();
             String email = recipient.getEmail();
+            Type type = recipient.getType();
+            
+            int rt = type==Type.TO ? 1 :
+                     type==Type.CC ? 2 :
+                                     3 ;
             
             StoragePropertiesChunk recipStorage = new StoragePropertiesChunk();
+            recipStorage.setProperty(new PropertyValue(MAPIProperty.OBJECT_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(6).array())); //MAPI_MAILUSER
+            recipStorage.setProperty(new PropertyValue(MAPIProperty.DISPLAY_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0).array())); //DT_MAILUSER
+            recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(rt).array())); 
+            recipStorage.setProperty(new PropertyValue(MAPIProperty.ROWID, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(recipientCounter).array())); 
             if(name!=null) { 
                 recipStorage.setProperty(new PropertyValue(MAPIProperty.DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
                 recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
             }
-            if(email!=null) { recipStorage.setProperty(new PropertyValue(MAPIProperty.EMAIL_ADDRESS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(email))); }
+            if(email!=null) { 
+                recipStorage.setProperty(new PropertyValue(MAPIProperty.EMAIL_ADDRESS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(email))); 
+                if(name==null) {
+                    recipStorage.setProperty(new PropertyValue(MAPIProperty.DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(email))); 
+                    recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(email))); 
+                }
+            }
            
             String rid = ""+recipientCounter;
             while(rid.length()<8) { rid = "0"+rid; }
-            DirectoryEntry recip = fs.createDirectory(RecipientChunks.PREFIX+"#"+rid); //page 15, point 2.2.1
+            DirectoryEntry recip = fs.createDirectory(RecipientChunks.PREFIX+rid); //page 15, point 2.2.1
             recipStorage.writeTo(recip);
             
             ++recipientCounter;
@@ -419,16 +437,19 @@ public class OutlookMessage {
             is.close();
             
             StoragePropertiesChunk attachStorage = new StoragePropertiesChunk();
+            attachStorage.setProperty(new PropertyValue(MAPIProperty.OBJECT_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(7).array())); //MAPI_ATTACH
             if(name!=null) { 
                 attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
                 attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_LONG_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
             }
             if(mimeName!=null) { attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_MIME_TAG, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); }
+            attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_NUM, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(attachmentCounter).array()));
+            attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_METHOD, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(1).array())); //ATTACH_BY_VALUE
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_DATA, FLAG_READABLE | FLAG_WRITEABLE, data));
             
             String rid = ""+attachmentCounter;
             while(rid.length()<8) { rid = "0"+rid; }
-            DirectoryEntry recip = fs.createDirectory(AttachmentChunks.PREFIX+"#"+rid); //page 15, point 2.2.1
+            DirectoryEntry recip = fs.createDirectory(AttachmentChunks.PREFIX+rid); //page 15, point 2.2.1
             attachStorage.writeTo(recip);
             
             ++attachmentCounter;
