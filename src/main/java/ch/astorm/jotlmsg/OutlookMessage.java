@@ -2,10 +2,18 @@
 package ch.astorm.jotlmsg;
 
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
+import ch.astorm.jotlmsg.io.MessagePropertiesChunk;
+import ch.astorm.jotlmsg.io.PropertiesChunk;
+import static ch.astorm.jotlmsg.io.PropertiesChunk.FLAG_READABLE;
+import static ch.astorm.jotlmsg.io.PropertiesChunk.FLAG_WRITEABLE;
+import ch.astorm.jotlmsg.io.StoragePropertiesChunk;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -25,9 +33,14 @@ import javax.mail.util.ByteArrayDataSource;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
 import org.apache.poi.hsmf.datatypes.MAPIProperty;
+import org.apache.poi.hsmf.datatypes.NameIdChunks;
 import org.apache.poi.hsmf.datatypes.PropertyValue;
 import org.apache.poi.hsmf.datatypes.RecipientChunks;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
+import org.apache.poi.poifs.filesystem.DirectoryEntry;
+import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
+import org.apache.poi.util.IOUtils;
+import org.apache.poi.util.StringUtil;
 
 /**
  * Represents an Outlook message.
@@ -317,6 +330,114 @@ public class OutlookMessage {
         return message;
     }
     
+    /**
+     * Writes the content of this message to the specified {@code file}. The created
+     * file will be in format {@code .msg} that can be open by Microsoft Outlook.
+     * 
+     * @param file The {@code .msg} file to create.
+     * @throws IOException If an I/O error occurs.
+     */
+    public void writeTo(File file) throws IOException {
+        FileOutputStream fos = new FileOutputStream(file);
+        writeTo(fos);
+        fos.close();
+    }
+    
+    /**
+     * Writes the content of this message to the specified {@code outputStream}. The
+     * bytes written represent a {@code .msg} file that can be open by Microsoft Outlook.
+     * The {@code outputStream} will remain open.
+     * 
+     * @param outputStream The stream to write to.
+     * @throws IOException If an I/O error occurs.
+     */
+    public void writeTo(OutputStream outputStream) throws IOException {
+        NPOIFSFileSystem fs = new NPOIFSFileSystem();
+        
+        List<OutlookMessageRecipient> recipients = getAllRecipients();
+        List<OutlookMessageAttachment> attachments = getAttachments();
+        String body = getPlainTextBody();
+        String subject = getSubject();
+        String from = getFrom();
+        
+        //creates the basic structure (page 17, point 2.2.3)
+        DirectoryEntry nameid = fs.createDirectory(NameIdChunks.NAME);
+        nameid.createDocument(PropertiesChunk.PREFIX+"00020102", new ByteArrayInputStream(new byte[0])); //GUID Stream
+        nameid.createDocument(PropertiesChunk.PREFIX+"00030102", new ByteArrayInputStream(new byte[0])); //Entry Stream (mandatory, otherwise Outlook crashes)
+        nameid.createDocument(PropertiesChunk.PREFIX+"00040102", new ByteArrayInputStream(new byte[0])); //String Stream
+        
+        //creates the top-level structure of data
+        MessagePropertiesChunk topLevelChunk = new MessagePropertiesChunk();
+        topLevelChunk.setAttachmentCount(attachments.size());
+        topLevelChunk.setRecipientCount(recipients.size());
+        topLevelChunk.setNextAttachmentId(attachments.isEmpty() ? 0 : 1);
+        topLevelChunk.setNextRecipientId(recipients.isEmpty() ? 0 : 1);
+        topLevelChunk.setConstainsStorageAttachment(!attachments.isEmpty() || !recipients.isEmpty());
+        
+        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.STORE_SUPPORT_MASK, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0x00040000).array())); //all the strings will be in unicode
+        if(subject!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SUBJECT, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(subject))); }
+        if(body!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(body))); }
+        if(from!=null) { 
+            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SENDER_EMAIL_ADDRESS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(from))); 
+            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SENDER_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(from))); 
+        }
+        
+        topLevelChunk.writeTo(fs.getRoot());
+        
+        //creates the recipients
+        int recipientCounter = 0;
+        for(OutlookMessageRecipient recipient : recipients) {
+            if(recipientCounter>=2048) { throw new RuntimeException("too many recipients (max=2048)"); } //limitation, see page 15, point 2.2.1
+            
+            String name = recipient.getName();
+            String email = recipient.getEmail();
+            
+            StoragePropertiesChunk recipStorage = new StoragePropertiesChunk();
+            if(name!=null) { 
+                recipStorage.setProperty(new PropertyValue(MAPIProperty.DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
+                recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
+            }
+            if(email!=null) { recipStorage.setProperty(new PropertyValue(MAPIProperty.EMAIL_ADDRESS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(email))); }
+           
+            String rid = ""+recipientCounter;
+            while(rid.length()<8) { rid = "0"+rid; }
+            DirectoryEntry recip = fs.createDirectory(RecipientChunks.PREFIX+"#"+rid); //page 15, point 2.2.1
+            recipStorage.writeTo(recip);
+            
+            ++recipientCounter;
+        }
+        
+        //creates the attachments
+        int attachmentCounter = 0;
+        for(OutlookMessageAttachment attachment : attachments) {
+            if(attachmentCounter>=2048) { throw new RuntimeException("too many attachments (max=2048)"); } //limitation, see page 15, point 2.2.2
+            
+            InputStream is = attachment.getNewInputStream();
+            String name = attachment.getName();
+            String mimeName = attachment.getMimeType();
+            byte[] data = IOUtils.toByteArray(is);
+            is.close();
+            
+            StoragePropertiesChunk attachStorage = new StoragePropertiesChunk();
+            if(name!=null) { 
+                attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
+                attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_LONG_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
+            }
+            if(mimeName!=null) { attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_MIME_TAG, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); }
+            attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_DATA, FLAG_READABLE | FLAG_WRITEABLE, data));
+            
+            String rid = ""+attachmentCounter;
+            while(rid.length()<8) { rid = "0"+rid; }
+            DirectoryEntry recip = fs.createDirectory(AttachmentChunks.PREFIX+"#"+rid); //page 15, point 2.2.1
+            attachStorage.writeTo(recip);
+            
+            ++attachmentCounter;
+        }
+        
+        fs.writeFilesystem(outputStream);
+        fs.close();
+    }
+    
     private void parseMAPIMessage(MAPIMessage mapiMessage) {
         silent(()-> parseFrom(mapiMessage));
         silent(()-> parseReplyTo(mapiMessage));
@@ -332,9 +453,9 @@ public class OutlookMessage {
      */
     protected void parseFrom(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         //TODO
-        /*this.from = mapiMessage.getDisplayFrom();
+        this.from = mapiMessage.getDisplayFrom();
         if(from!=null) { this.from = from.trim(); }
-        if(from!=null && from.isEmpty()) { this.from = null; }*/
+        if(from!=null && from.isEmpty()) { this.from = null; }
     }
     
     /**
