@@ -17,6 +17,7 @@ import javax.activation.DataHandler;
 import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
@@ -38,6 +39,8 @@ import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 public class OutlookMessage {
     private String subject;
     private String plainTextBody;
+    private String from;
+    private List<String> replyTo;
     
     private final Map<Type, List<OutlookMessageRecipient>> recipients = new EnumMap<>(Type.class);
     private final List<OutlookMessageAttachment> attachments = new ArrayList<>(8);
@@ -92,6 +95,20 @@ public class OutlookMessage {
      */
     public String getPlainTextBody() { return plainTextBody; }
     public void setPlainTextBody(String plainTextBody) { this.plainTextBody = plainTextBody; }
+
+    /**
+     * Defines the From email address from which a message has been sent.
+     * This value may be null.
+     */
+    public String getFrom() { return from; }
+    public void setFrom(String from) { this.from = from; }
+
+    /**
+     * Defines the addresses use when the user hits the 'reply' button.
+     * This value may be null.
+     */
+    public List<String> getReplyTo() { return replyTo; }
+    public void setReplyTo(List<String> replyTo) { this.replyTo = replyTo; }
     
     /**
      * Returns all the recipients of the specified type. If there is none, then an
@@ -260,6 +277,18 @@ public class OutlookMessage {
         String subject = getSubject();
         if(subject!=null) { message.setSubject(subject); }
         
+        String from = getFrom();
+        if(from!=null) { message.setFrom(new InternetAddress(from)); }
+        
+        List<String> replyTo = getReplyTo();
+        if(replyTo!=null) {
+            List<Address> replyAddresses = new ArrayList<>(replyTo.size());
+            for(String replyToEmail : replyTo) {
+                if(replyToEmail!=null) { replyAddresses.add(new InternetAddress(replyToEmail)); }
+            }
+            message.setReplyTo(replyAddresses.toArray(new Address[replyAddresses.size()]));
+        }
+        
         for(OutlookMessageRecipient recipient : getAllRecipients()) {
             Address address = recipient.getAddress();
             if(address!=null) { message.addRecipient(recipient.getType().getRecipientType(), address); }
@@ -268,12 +297,11 @@ public class OutlookMessage {
         MimeMultipart multipart = new MimeMultipart();
         
         String plainText = getPlainTextBody();
-        if(plainText!=null) {
-            MimeBodyPart body = new MimeBodyPart();
-            body.setFileName("body");
-            body.setText(getPlainTextBody(), "UTF-8", "plain");
-            multipart.addBodyPart(body);
-        }
+        if(plainText==null) { throw new MessagingException("missing body"); }
+        MimeBodyPart body = new MimeBodyPart();
+        body.setFileName("body");
+        body.setText(getPlainTextBody(), "UTF-8", "plain");
+        multipart.addBodyPart(body);
         
         for(OutlookMessageAttachment attachment : getAttachments()) {
             InputStream inputStream = attachment.getNewInputStream();
@@ -290,14 +318,35 @@ public class OutlookMessage {
     }
     
     private void parseMAPIMessage(MAPIMessage mapiMessage) {
-        silent(() -> { parseSubject(mapiMessage); });
-        silent(() -> { parseTextBody(mapiMessage); });
-        silent(() -> { parseRecipients(mapiMessage); });
-        silent(() -> { parseAttachments(mapiMessage); });
+        silent(()-> parseFrom(mapiMessage));
+        silent(()-> parseReplyTo(mapiMessage));
+        silent(()-> parseSubject(mapiMessage));
+        silent(()-> parseTextBody(mapiMessage));
+        silent(()-> parseRecipients(mapiMessage));
+        silent(()-> parseAttachments(mapiMessage));
     }
     
     /**
-     * Parses the subject from the {@code mapiMessage}.
+     * Parses the From field from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     */
+    protected void parseFrom(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        //TODO
+        /*this.from = mapiMessage.getDisplayFrom();
+        if(from!=null) { this.from = from.trim(); }
+        if(from!=null && from.isEmpty()) { this.from = null; }*/
+    }
+    
+    /**
+     * Parses the Reply-To field from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     */
+    protected void parseReplyTo(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        //TODO
+    }
+    
+    /**
+     * Parses the Subject field from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
      */
     protected void parseSubject(MAPIMessage mapiMessage) throws ChunkNotFoundException { 
