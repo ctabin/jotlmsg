@@ -1,13 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>ch.astorm.jotlmsg</groupId>
+  <groupId>com.github.ctabin</groupId>
   <artifactId>jotlmsg</artifactId>
   <packaging>jar</packaging>
   <version>1.0</version>
-  <name>jotlmsg</name>
+  <name>${project.groupId}:${project.artifactId}</name>
   <description>Simple API to generate Microsoft Outlook messages (.msg)</description>
-  <url>http://www.astorm.ch</url>
+  <url>https://github.com/ctabin/jotlmsg</url>
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Cédric Tabin</name>
+      <email>tabin.cedric@gmail.com</email>
+      <organization>astorm</organization>
+      <organizationUrl>http://www.astorm.ch</organizationUrl>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:git://github.com/ctabin/jotlmsg.git</connection>
+    <developerConnection>scm:git:ssh://github.com:ctabin/jotlmsg.git</developerConnection>
+    <url>http://github.com/ctabin/jotlmsg/tree/master</url>
+  </scm>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <centaurus.version>1.0-SNAPSHOT</centaurus.version>
