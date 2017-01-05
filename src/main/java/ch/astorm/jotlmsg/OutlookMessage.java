@@ -271,7 +271,7 @@ public class OutlookMessage {
      * <p>The data of the {@code InputStream} will be loaded into memory (see {@link MemoryInputStreamCreator}).
      * If you don't expect to invoke {@link #writeTo(java.io.OutputStream) writeTo()} or {@link #toMimeMessage() toMimeMessage()} multiple times,
      * then consider using the {@link #addAttachment(java.lang.String, java.lang.String, ch.astorm.jotlmsg.OutlookMessageAttachment.InputStreamCreator) other}
-     * method, which uses a {@link InputSreamCreator}.</p>
+     * method, which uses a {@link InputStreamCreator}.</p>
      * 
      * @param name The name.
      * @param mimeType The MIME type.
