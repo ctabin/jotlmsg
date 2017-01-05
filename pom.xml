@@ -6,6 +6,7 @@
   <packaging>jar</packaging>
   <version>1.0</version>
   <name>jotlmsg</name>
+  <description>Simple API to generate Microsoft Outlook messages (.msg)</description>
   <url>http://www.astorm.ch</url>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
