@@ -13,14 +13,14 @@ import org.junit.Test;
 public class OutlookMessageTest {
     
     @Test
-    public void testFromScratch() {
+    public void testFromScratch() throws Exception {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
         message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
         message.addRecipient(Type.TO, "ctabin@jotlmsg.com");
         message.addRecipient(Type.CC, "cc@jotlmsg.com", "Copy");
-        message.addAttachment("Empty file", "text/plain", null);
+        message.addAttachment("Empty file", "text/plain", a -> null);
         
         assertEquals("This is a message", message.getSubject());
         assertEquals("Hello,\n\nThis is a simple message.\n\n.Bye.", message.getPlainTextBody());
@@ -35,10 +35,14 @@ public class OutlookMessageTest {
         assertNull(message.getRecipients(Type.TO).get(1).getName());
         assertEquals(1, message.getAttachments().size());
         assertEquals("Empty file", message.getAttachments().get(0).getName());
-        assertNull(message.getAttachments().get(0).getInputStreamCreator());
+        assertNull(message.getAttachments().get(0).getNewInputStream());
         
         message.removeAllRecipients(Type.TO);
         assertEquals(0, message.getRecipients(Type.TO).size());
+        
+        message.removeAllRecipients();
+        assertEquals(0, message.getRecipients(Type.CC).size());
+        assertEquals(0, message.getRecipients(Type.BCC).size());
         
         message.removeAllAttachments();
         assertEquals(0, message.getAttachments().size());

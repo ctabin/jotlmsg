@@ -34,6 +34,8 @@
 
 package ch.astorm.jotlmsg;
 
+import ch.astorm.jotlmsg.OutlookMessageAttachment.InputStreamCreator;
+import ch.astorm.jotlmsg.OutlookMessageAttachment.MemoryInputStreamCreator;
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
 import ch.astorm.jotlmsg.io.MessagePropertiesChunk;
 import ch.astorm.jotlmsg.io.PropertiesChunk;
@@ -78,7 +80,17 @@ import org.apache.poi.util.StringUtil;
 /**
  * Represents an Outlook message.
  * <p>This class is meant to be a very simple and easy-to-use API to read and create
- * {@code .msg} files for Microsoft Outlook.</p>
+ * {@code .msg} files for Microsoft Outlook. It is also compatible with the standard
+ * {@code javax.mail} package, by the usage of the {@link #toMimeMessage()} method.</p>
+ * <p>This implementation is capable of generating {@code .msg} files that can be open by
+ * Microsoft Outlook, so it behaves like if the user has created a new email. However it's
+ * purpose is not to make a full-integration of Microsoft Outlook with all the features it
+ * has (such as calendars, appointments, tasks, ...). Those features may be covered in future
+ * developments.</p>
+ * <p>The Microsoft specification {@code MS-OXCMSG} can be found in the {@code ms-specifications}
+ * folder of jotlmsg, or can be downloaded <a href="https://msdn.microsoft.com/en-us/library/cc463900%28v=exchg.80%29.aspx">here</a>.
+ * The detailed list of properties {@code MS-OXPROPS} is also available in the {@code ms-specifications}
+ * folder or <a href="https://msdn.microsoft.com/en-us/library/cc433490%28v=exchg.80%29.aspx">here</a>.</p>
  * 
  * @author Cedric Tabin
  */
@@ -143,7 +155,7 @@ public class OutlookMessage {
     public void setPlainTextBody(String plainTextBody) { this.plainTextBody = plainTextBody; }
 
     /**
-     * Defines the From email address from which a message has been sent.
+     * Defines the {@code From} email address from which a message has been sent.
      * This value may be null.
      */
     public String getFrom() { return from; }
@@ -151,7 +163,11 @@ public class OutlookMessage {
 
     /**
      * Defines the addresses use when the user hits the 'reply' button.
+     * Currently, this value is only used to create a {@link MimeMessage} but isn't
+     * used for {@code .msg} generation.
      * This value may be null.
+     * 
+     * @see #toMimeMessage()
      */
     public List<String> getReplyTo() { return replyTo; }
     public void setReplyTo(List<String> replyTo) { this.replyTo = replyTo; }
@@ -235,6 +251,13 @@ public class OutlookMessage {
     }
     
     /**
+     * Removes all the recipients.
+     */
+    public void removeAllRecipients() {
+        recipients.clear();
+    }
+    
+    /**
      * Returns the attachments of this message. This list can be directly modified.
      * 
      * @return The attachments.
@@ -244,8 +267,11 @@ public class OutlookMessage {
     }
     
     /**
-     * Add a new attachment to this message. It is possible to associate the {@code InputStream}
-     * data after the attachment creation.
+     * Add a new attachment to this message.
+     * <p>The data of the {@code InputStream} will be loaded into memory (see {@link MemoryInputStreamCreator}).
+     * If you don't expect to invoke {@link #writeTo(java.io.OutputStream) writeTo()} or {@link #toMimeMessage() toMimeMessage()} multiple times,
+     * then consider using the {@link #addAttachment(java.lang.String, java.lang.String, ch.astorm.jotlmsg.OutlookMessageAttachment.InputStreamCreator) other}
+     * method, which uses a {@link InputSreamCreator}.</p>
      * 
      * @param name The name.
      * @param mimeType The MIME type.
@@ -254,6 +280,24 @@ public class OutlookMessage {
      */
     public OutlookMessageAttachment addAttachment(String name, String mimeType, InputStream input) {
         OutlookMessageAttachment attachment = new OutlookMessageAttachment(name, mimeType, input);
+        addAttachment(attachment);
+        return attachment;
+    }
+    
+    /**
+     * Add a new attachment to this message. The {@code InputStreamCreator} can be
+     * set to the attachment later.
+     * <p>To use this method with a single-usage {@code InputStream}:
+     * <pre>message.addAttachment("myAttachment", "text/plain", a -> myInputStream);</pre>
+     * </p>
+     * 
+     * @param name The name.
+     * @param mimeType The MIME type.
+     * @param inputStreamCreator The {@code InputStream} creator or null.
+     * @return The created attachment.
+     */
+    public OutlookMessageAttachment addAttachment(String name, String mimeType, InputStreamCreator inputStreamCreator) {
+        OutlookMessageAttachment attachment = new OutlookMessageAttachment(name, mimeType, inputStreamCreator);
         addAttachment(attachment);
         return attachment;
     }
@@ -406,6 +450,7 @@ public class OutlookMessage {
         topLevelChunk.setNextAttachmentId(attachments.size()); //actually indicates the next free id !
         topLevelChunk.setNextRecipientId(recipients.size()); //actually indicates the next free id !
 
+        //constants values can be found here: http://www.manualpages.de/CentOS/CentOS-6.3/man3/MAPI_ATTACH.3.html
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.STORE_SUPPORT_MASK, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0x00040000).array())); //all the strings will be in unicode
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_CLASS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("IPM.Note"))); //outlook message
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); //unsent message
@@ -503,9 +548,11 @@ public class OutlookMessage {
     /**
      * Parses the From field from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
+     * 
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
      */
     protected void parseFrom(MAPIMessage mapiMessage) throws ChunkNotFoundException {
-        //TODO
         this.from = mapiMessage.getDisplayFrom();
         if(from!=null) { this.from = from.trim(); }
         if(from!=null && from.isEmpty()) { this.from = null; }
@@ -514,6 +561,10 @@ public class OutlookMessage {
     /**
      * Parses the Reply-To field from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
+     * Currently, this method does nothing.
+     * 
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
      */
     protected void parseReplyTo(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         //TODO
@@ -522,6 +573,9 @@ public class OutlookMessage {
     /**
      * Parses the Subject field from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
+     * 
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
      */
     protected void parseSubject(MAPIMessage mapiMessage) throws ChunkNotFoundException { 
         this.subject = mapiMessage.getSubject();
@@ -532,6 +586,9 @@ public class OutlookMessage {
     /**
      * Parses the text body from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
+     * 
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
      */
     protected void parseTextBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         this.plainTextBody = mapiMessage.getTextBody();
@@ -542,6 +599,9 @@ public class OutlookMessage {
     /**
      * Parses the recipients from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
+     * 
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
      */
     protected void parseRecipients(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         RecipientChunks[] recipientChunks = mapiMessage.getRecipientDetailsChunks();
@@ -569,6 +629,9 @@ public class OutlookMessage {
     /**
      * Parses the attachments from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
+     * 
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
      */
     protected void parseAttachments(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         AttachmentChunks[] attachmentChunks = mapiMessage.getAttachmentFiles();
