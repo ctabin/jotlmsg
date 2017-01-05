@@ -59,7 +59,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-			  <includeScope>runtime</includeScope>
+              <includeScope>runtime</includeScope>
               <outputDirectory>${project.build.directory}/lib</outputDirectory>
               <overWriteReleases>false</overWriteReleases>
               <overWriteSnapshots>false</overWriteSnapshots>
@@ -85,15 +85,15 @@
         <version>2.10.4</version>
         <executions>
           <execution>
-            <id>javadoc-jar</id>
+            <id>attach-javadocs</id>
             <phase>package</phase>
             <goals>
               <goal>jar</goal>
             </goals>
-			<configuration>
-				<show>public</show>
-			</configuration>
-		  </execution>
+            <configuration>
+              <show>public</show>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <!-- Source generation -->
@@ -103,16 +103,16 @@
         <version>3.0.1</version>
         <executions>
           <execution>
-            <id>source-jar</id>
+            <id>attach-sources</id>
             <phase>package</phase>
             <goals>
-              <goal>jar</goal>
+              <goal>jar-no-fork</goal>
             </goals>
-			<configuration>
-			  <attach>false</attach>
-			</configuration>
-		  </execution>
-		</executions>
+            <configuration>
+              <attach>false</attach>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
