@@ -4,7 +4,7 @@
   <groupId>ch.astorm.jotlmsg</groupId>
   <artifactId>jotlmsg</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0</version>
+  <version>1.0</version>
   <name>jotlmsg</name>
   <url>http://www.astorm.ch</url>
   <properties>
@@ -39,7 +39,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}</outputDirectory>
+              <outputDirectory>${project.build.directory}/lib</outputDirectory>
               <overWriteReleases>false</overWriteReleases>
               <overWriteSnapshots>false</overWriteSnapshots>
               <overWriteIfNewer>true</overWriteIfNewer>
