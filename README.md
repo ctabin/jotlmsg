@@ -4,7 +4,16 @@ This library is based on [Apache POI](https://poi.apache.org) and is a 100% Java
 
 ## Installation
 
-Simply put the ```jotlmsg.jar``` with its dependencies in your classpath.
+Simply add the ```jotlmsg.jar``` and its dependencies to your classpath.
+
+If you're using maven, then simply add the following dependency:
+```xml
+<dependency>
+    <groupId>ch.astorm</groupId>
+    <artifactId>jotlmsg</artifactId>
+    <version>1.0</version>
+</dependency>
+```
 
 ## Usage examples
 
