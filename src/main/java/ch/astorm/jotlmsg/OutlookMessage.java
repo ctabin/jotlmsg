@@ -494,7 +494,7 @@ public class OutlookMessage {
                 }
             }
            
-            String rid = ""+recipientCounter;
+            String rid = ""+Integer.toHexString(recipientCounter);
             while(rid.length()<8) { rid = "0"+rid; }
             DirectoryEntry recip = fs.createDirectory(RecipientChunks.PREFIX+rid); //page 15, point 2.2.1
             recipStorage.writeTo(recip);
