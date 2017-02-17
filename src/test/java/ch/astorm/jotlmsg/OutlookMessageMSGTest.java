@@ -148,4 +148,19 @@ public class OutlookMessageMSGTest {
 
         testBinary(message, "generated/many-recipients.msg");
     }
+    
+    @Test
+    public void addManyAttachments() throws Exception {
+        String testFilename = "test.msg";
+        int count = 40;
+
+        OutlookMessage message = new OutlookMessage();
+        IntStream.range(0,count).forEach(i -> message.addAttachment("test"+i+".txt", "text/plain", m -> new ByteArrayInputStream(("this is content "+i).getBytes())));
+
+        message.addRecipient(Type.TO, "john@doe.com");
+        message.setSubject("betreff");
+        message.setPlainTextBody("content");
+
+        testBinary(message, "generated/many-attachments.msg");
+    }
 }
