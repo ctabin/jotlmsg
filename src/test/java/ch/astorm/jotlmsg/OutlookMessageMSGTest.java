@@ -1,10 +1,14 @@
 
 package ch.astorm.jotlmsg;
 
+import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.stream.IntStream;
 import org.apache.poi.util.IOUtils;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -132,5 +136,16 @@ public class OutlookMessageMSGTest {
             assertEquals(srcData.length, parData.length);
             assertArrayEquals(srcData, parData);
         }
+    }
+    
+    @Test
+    public void addManyRecipients() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        IntStream.range(0,40).forEach(i -> message.addRecipient(Type.TO, "user" + i + "@xyz.com"));
+
+        message.setSubject("betreff");
+        message.setPlainTextBody("content");
+
+        testBinary(message, "generated/many-recipients.msg");
     }
 }
