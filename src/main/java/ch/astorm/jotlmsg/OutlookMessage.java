@@ -524,7 +524,7 @@ public class OutlookMessage {
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_METHOD, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(1).array())); //ATTACH_BY_VALUE
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_DATA, FLAG_READABLE | FLAG_WRITEABLE, data));
             
-            String rid = ""+attachmentCounter;
+            String rid = ""+Integer.toHexString(attachmentCounter);
             while(rid.length()<8) { rid = "0"+rid; }
             DirectoryEntry recip = fs.createDirectory(AttachmentChunks.PREFIX+rid); //page 15, point 2.2.1
             attachStorage.writeTo(recip);
