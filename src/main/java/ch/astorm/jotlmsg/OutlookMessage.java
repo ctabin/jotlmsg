@@ -67,10 +67,12 @@ import javax.mail.internet.MimeMultipart;
 import javax.mail.util.ByteArrayDataSource;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
+import org.apache.poi.hsmf.datatypes.ByteChunk;
 import org.apache.poi.hsmf.datatypes.MAPIProperty;
 import org.apache.poi.hsmf.datatypes.NameIdChunks;
 import org.apache.poi.hsmf.datatypes.PropertyValue;
 import org.apache.poi.hsmf.datatypes.RecipientChunks;
+import org.apache.poi.hsmf.datatypes.StringChunk;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 import org.apache.poi.poifs.filesystem.DirectoryEntry;
 import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
@@ -636,12 +638,17 @@ public class OutlookMessage {
     protected void parseAttachments(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         AttachmentChunks[] attachmentChunks = mapiMessage.getAttachmentFiles();
         for(AttachmentChunks attachmentChunk : attachmentChunks) {
-            String name = attachmentChunk.attachLongFileName!=null ? attachmentChunk.attachLongFileName.getValue() :
-                          attachmentChunk.attachFileName!=null ? attachmentChunk.attachFileName.getValue() :
-                                                                 attachmentChunk.getPOIFSName();
-            InputStream data = attachmentChunk.attachData!=null ? new ByteArrayInputStream(attachmentChunk.attachData.getValue()) : null;
-            String mimeType = attachmentChunk.attachMimeTag!=null ? attachmentChunk.attachMimeTag.getValue() : null;
-            addAttachment(name, mimeType, data);
+            StringChunk longFileName = attachmentChunk.getAttachLongFileName();
+            StringChunk fileName = attachmentChunk.getAttachFileName();
+            ByteChunk data = attachmentChunk.getAttachData();
+            StringChunk mimeType = attachmentChunk.getAttachMimeTag();
+
+            String name = longFileName!=null ? longFileName.getValue() :
+                          fileName!=null ?     fileName.getValue() :
+                                               attachmentChunk.getPOIFSName();
+            InputStream dataIS = data!=null ? new ByteArrayInputStream(data.getValue()) : null;
+            String mimeTypeVal = mimeType!=null ? mimeType.getValue() : null;
+            addAttachment(name, mimeTypeVal, dataIS);
         }
     }
     
