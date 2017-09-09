@@ -289,9 +289,8 @@ public class OutlookMessage {
     /**
      * Add a new attachment to this message. The {@code InputStreamCreator} can be
      * set to the attachment later.
-     * <p>To use this method with a single-usage {@code InputStream}:
-     * <pre>message.addAttachment("myAttachment", "text/plain", a -> myInputStream);</pre>
-     * </p>
+     * <p>To use this method with a single-usage {@code InputStream}:</p>
+     * <pre>message.addAttachment("myAttachment", "text/plain", a -&gt; myInputStream);</pre>
      * 
      * @param name The name.
      * @param mimeType The MIME type.
