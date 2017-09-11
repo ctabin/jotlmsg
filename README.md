@@ -11,7 +11,7 @@ If you're using maven, then simply add the following dependency:
 <dependency>
     <groupId>ch.astorm</groupId>
     <artifactId>jotlmsg</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 </dependency>
 ```
 
