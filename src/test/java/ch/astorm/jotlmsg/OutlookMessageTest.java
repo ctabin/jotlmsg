@@ -101,4 +101,24 @@ public class OutlookMessageTest {
         String data = IOUtils.toString(message.getAttachments().get(0).getNewInputStream(), "UTF-8");
         assertEquals("This is some basic content of attached file.", data);
     }
+
+    @Test
+    public void testEmailExtraction() {
+        assertNull(OutlookMessage.extractEmail(null));
+        assertNull(OutlookMessage.extractEmail("      "));
+        assertNull(OutlookMessage.extractEmail("John"));
+        assertNull(OutlookMessage.extractEmail("John Doe"));
+        assertNull(OutlookMessage.extractEmail("John Doe@ gmail"));
+        assertNull(OutlookMessage.extractEmail("@John"));
+        assertNull(OutlookMessage.extractEmail("John @Doe"));
+        assertEquals("john.doe@gmail.com", OutlookMessage.extractEmail("john.doe@gmail.com"));
+        assertEquals("john.doe@gmail.com", OutlookMessage.extractEmail("John Doe <john.doe@gmail.com>"));
+        assertEquals("john.doe@gmail.com", OutlookMessage.extractEmail("<john.doe@gmail.com>"));
+        assertEquals("john_doe+someTag@gmail.com", OutlookMessage.extractEmail("john_doe+someTag@gmail.com"));
+        assertEquals("john.doe_extended+someTag@gmail.com", OutlookMessage.extractEmail("John Doe <john.doe_extended+someTag@gmail.com>"));
+
+        assertEquals("john.doe@gmail.com", OutlookMessage.extractEmail("john.doe@gmail.com,francis.max@blast.com"));
+        assertEquals("john.doe@gmail.com", OutlookMessage.extractEmail("John <john.doe@gmail.com>,francis.max@blast.com"));
+        assertEquals("john.doe@gmail.com", OutlookMessage.extractEmail("john.doe@gmail.com , Francis <francis.max@blast.com>"));
+    }
 }

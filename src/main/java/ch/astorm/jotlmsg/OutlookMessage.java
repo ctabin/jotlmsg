@@ -56,6 +56,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.activation.DataHandler;
 import javax.mail.Address;
 import javax.mail.MessagingException;
@@ -368,14 +370,15 @@ public class OutlookMessage {
         String subject = getSubject();
         if(subject!=null) { message.setSubject(subject); }
         
-        String from = getFrom();
+        String from = extractEmail(getFrom());
         if(from!=null) { message.setFrom(new InternetAddress(from)); }
         
         List<String> replyTo = getReplyTo();
         if(replyTo!=null) {
             List<Address> replyAddresses = new ArrayList<>(replyTo.size());
             for(String replyToEmail : replyTo) {
-                if(replyToEmail!=null) { replyAddresses.add(new InternetAddress(replyToEmail)); }
+                String replyToEmailExtracted = extractEmail(replyToEmail);
+                if(replyToEmailExtracted!=null) { replyAddresses.add(new InternetAddress(replyToEmailExtracted)); }
             }
             message.setReplyTo(replyAddresses.toArray(new Address[replyAddresses.size()]));
         }
@@ -407,7 +410,28 @@ public class OutlookMessage {
         message.setContent(multipart);
         return message;
     }
-    
+
+    private static final Pattern MIXED_MAIL = Pattern.compile("[^\\s<>,/]+@[^\\s<>,/]+");
+
+    /**
+     * Extracts the mail from a mixed mail string, for instance "John Doe &lt;john.doe@hotmail.com&gt;".
+     * <p>This method uses a simple pattern to get the first string which looks like an email,
+     * eg there is an @ with at least one char on each side. Spaces are considered as separators.</p>
+     * <p>If there are multiple mails in {@code mixedMailStr}, only the first one will be returned.</p>
+     * <p>This method does not check at all if the returned mail is valid.</p>
+     *
+     * @param mixedMailStr A string that contains (potentially) an email address.
+     * @return The first string looking like an email or null.
+     */
+    public static String extractEmail(String mixedMailStr) {
+        if(mixedMailStr==null || mixedMailStr.trim().isEmpty()) {
+            return null;
+        }
+
+        Matcher matcher = MIXED_MAIL.matcher(mixedMailStr);
+        return matcher.find() ? matcher.group() : null;
+    }
+
     /**
      * Writes the content of this message to the specified {@code file}. The created
      * file will be in format {@code .msg} that can be open by Microsoft Outlook.
