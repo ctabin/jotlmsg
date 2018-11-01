@@ -77,7 +77,7 @@ import org.apache.poi.hsmf.datatypes.RecipientChunks;
 import org.apache.poi.hsmf.datatypes.StringChunk;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 import org.apache.poi.poifs.filesystem.DirectoryEntry;
-import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.util.StringUtil;
 
@@ -454,7 +454,7 @@ public class OutlookMessage {
      * @throws IOException If an I/O error occurs.
      */
     public void writeTo(OutputStream outputStream) throws IOException {
-        NPOIFSFileSystem fs = new NPOIFSFileSystem();
+        POIFSFileSystem fs = new POIFSFileSystem();
         
         List<OutlookMessageRecipient> recipients = getAllRecipients();
         List<OutlookMessageAttachment> attachments = getAttachments();
@@ -475,10 +475,10 @@ public class OutlookMessage {
         topLevelChunk.setNextAttachmentId(attachments.size()); //actually indicates the next free id !
         topLevelChunk.setNextRecipientId(recipients.size()); //actually indicates the next free id !
 
-        //constants values can be found here: http://www.manualpages.de/CentOS/CentOS-6.3/man3/MAPI_ATTACH.3.html
+        //constants values can be found here: https://msdn.microsoft.com/en-us/library/ee219881(v=exchg.80).aspx
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.STORE_SUPPORT_MASK, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0x00040000).array())); //all the strings will be in unicode
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_CLASS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("IPM.Note"))); //outlook message
-        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); //unsent message
+        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); //unsent message - https://msdn.microsoft.com/en-us/library/ee160304(v=exchg.80).aspx
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.HASATTACH, FLAG_READABLE | FLAG_WRITEABLE, attachments.isEmpty() ? new byte[]{0} : new byte[]{1}));
         if(subject!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SUBJECT, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(subject))); }
         if(body!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(body))); }
