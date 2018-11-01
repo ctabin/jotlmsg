@@ -4,8 +4,11 @@ package ch.astorm.jotlmsg;
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.apache.commons.io.IOUtils;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import org.junit.Test;
 
@@ -100,6 +103,17 @@ public class OutlookMessageTest {
         
         String data = IOUtils.toString(message.getAttachments().get(0).getNewInputStream(), "UTF-8");
         assertEquals("This is some basic content of attached file.", data);
+    }
+
+    @Test
+    public void testParsingSent() throws Exception {
+        InputStream msg = OutlookMessageTest.class.getResourceAsStream("msoutlook/sent.msg");
+        OutlookMessage message = new OutlookMessage(msg);
+        Date sentDate = message.getSentDate();
+        assertNotNull(sentDate);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+        assertEquals(sdf.parse("28.02.2018"), sentDate);
     }
 
     @Test

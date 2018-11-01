@@ -49,7 +49,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -63,6 +65,7 @@ import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MailDateFormat;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
@@ -70,6 +73,7 @@ import javax.mail.util.ByteArrayDataSource;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
 import org.apache.poi.hsmf.datatypes.ByteChunk;
+import org.apache.poi.hsmf.datatypes.Chunk;
 import org.apache.poi.hsmf.datatypes.MAPIProperty;
 import org.apache.poi.hsmf.datatypes.NameIdChunks;
 import org.apache.poi.hsmf.datatypes.PropertyValue;
@@ -103,6 +107,7 @@ public class OutlookMessage {
     private String plainTextBody;
     private String from;
     private List<String> replyTo;
+    private Date sentDate;
     
     private final Map<Type, List<OutlookMessageRecipient>> recipients = new EnumMap<>(Type.class);
     private final List<OutlookMessageAttachment> attachments = new ArrayList<>(8);
@@ -175,7 +180,16 @@ public class OutlookMessage {
      */
     public List<String> getReplyTo() { return replyTo; }
     public void setReplyTo(List<String> replyTo) { this.replyTo = replyTo; }
-    
+
+    /**
+     * Defines the sent date of the message. If this value is not defined, then it
+     * means the message is considered as unsent.
+     * <p>However, it is possible that this value is set when reading a message that
+     * was created by Outlook and may then contains its creation date.</p>
+     */
+    public Date getSentDate() { return sentDate; }
+    public void setSentDate(Date d) { this.sentDate = d; }
+
     /**
      * Returns all the recipients of the specified type. If there is none, then an
      * empty list will be returned.
@@ -365,7 +379,7 @@ public class OutlookMessage {
      */
     public MimeMessage toMimeMessage(Session session) throws IOException, MessagingException {
         MimeMessage message = new MimeMessage(session);
-        message.setSentDate(new Date());
+        message.setSentDate(sentDate);
         
         String subject = getSubject();
         if(subject!=null) { message.setSubject(subject); }
@@ -478,8 +492,14 @@ public class OutlookMessage {
         //constants values can be found here: https://msdn.microsoft.com/en-us/library/ee219881(v=exchg.80).aspx
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.STORE_SUPPORT_MASK, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0x00040000).array())); //all the strings will be in unicode
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_CLASS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("IPM.Note"))); //outlook message
-        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); //unsent message - https://msdn.microsoft.com/en-us/library/ee160304(v=exchg.80).aspx
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.HASATTACH, FLAG_READABLE | FLAG_WRITEABLE, attachments.isEmpty() ? new byte[]{0} : new byte[]{1}));
+        if(sentDate==null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); } //mfUnsent - https://msdn.microsoft.com/en-us/library/ee160304(v=exchg.80).aspx
+        else {
+            MailDateFormat mdf = new MailDateFormat();
+            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(2).array())); //mfUnmodified
+            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.CLIENT_SUBMIT_TIME, FLAG_READABLE | FLAG_WRITEABLE, dateToBytes(sentDate)));
+            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.TRANSPORT_MESSAGE_HEADERS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("Date: "+mdf.format(sentDate))));
+        }
         if(subject!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SUBJECT, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(subject))); }
         if(body!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(body))); }
         if(from!=null) { 
@@ -560,14 +580,21 @@ public class OutlookMessage {
         fs.writeFilesystem(outputStream);
         fs.close();
     }
+
+    //extracted from org.apache.poi.hsmf.datatypes.TimePropertyValue
+    private final long OFFSET = 1000L * 60L * 60L * 24L * (365L * 369L + 89L);
+    private byte[] dateToBytes(Date date) {
+        return ByteBuffer.allocate(8).putLong((date.getTime()+OFFSET)*10*1000).array();
+    }
     
     private void parseMAPIMessage(MAPIMessage mapiMessage) {
-        silent(()-> parseFrom(mapiMessage));
-        silent(()-> parseReplyTo(mapiMessage));
-        silent(()-> parseSubject(mapiMessage));
-        silent(()-> parseTextBody(mapiMessage));
-        silent(()-> parseRecipients(mapiMessage));
-        silent(()-> parseAttachments(mapiMessage));
+        silent(() -> parseHeaders(mapiMessage));
+        silent(() -> parseFrom(mapiMessage));
+        silent(() -> parseReplyTo(mapiMessage));
+        silent(() -> parseSubject(mapiMessage));
+        silent(() -> parseTextBody(mapiMessage));
+        silent(() -> parseRecipients(mapiMessage));
+        silent(() -> parseAttachments(mapiMessage));
     }
     
     /**
@@ -589,7 +616,7 @@ public class OutlookMessage {
      * Currently, this method does nothing.
      * 
      * @param mapiMessage The message to parse.
-     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
      */
     protected void parseReplyTo(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         //TODO
@@ -600,7 +627,7 @@ public class OutlookMessage {
      * The parsing will continue, even if a chunk is not found.
      * 
      * @param mapiMessage The message to parse.
-     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
      */
     protected void parseSubject(MAPIMessage mapiMessage) throws ChunkNotFoundException { 
         this.subject = mapiMessage.getSubject();
@@ -613,7 +640,7 @@ public class OutlookMessage {
      * The parsing will continue, even if a chunk is not found.
      * 
      * @param mapiMessage The message to parse.
-     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
      */
     protected void parseTextBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         this.plainTextBody = mapiMessage.getTextBody();
@@ -626,7 +653,7 @@ public class OutlookMessage {
      * The parsing will continue, even if a chunk is not found.
      * 
      * @param mapiMessage The message to parse.
-     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
      */
     protected void parseRecipients(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         RecipientChunks[] recipientChunks = mapiMessage.getRecipientDetailsChunks();
@@ -652,11 +679,46 @@ public class OutlookMessage {
     }
     
     /**
+     * Parses the MIME headers of the {@code mapiMessage}. By default, this message will
+     * only check for the {@code Date} header.
+     * 
+     * @param mapiMessage The message.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
+     */
+    protected void parseHeaders(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        List<Chunk> headerChunks = mapiMessage.getMainChunks().getAll().get(MAPIProperty.TRANSPORT_MESSAGE_HEADERS);
+        if(headerChunks!=null && !headerChunks.isEmpty()) {
+            for(Chunk chunk : headerChunks) {
+                if(chunk instanceof StringChunk) {
+                    StringChunk sc = (StringChunk)chunk;
+                    String value = sc.getValue();
+                    int dateIdx = value.indexOf("Date:");
+                    if(dateIdx>=0) {
+                        int line = value.indexOf('\n', dateIdx+5);
+                        int semiColon = value.indexOf(';', dateIdx+5);
+                        int limit = line>=0 && semiColon>=0 ? Math.min(line, semiColon) :
+                                    line>=0 ? line : semiColon;
+                        String dateStr = value.substring(dateIdx+5, limit>=0 ? limit : value.length()).trim();
+                        MailDateFormat mdf = new MailDateFormat();
+                        try { sentDate = mdf.parse(dateStr); }
+                        catch(ParseException e) { /* ignored */ }
+                    }
+                }
+            }
+        }
+
+        if(sentDate==null) {
+            Calendar msgDate = mapiMessage.getMessageDate();
+            this.sentDate = msgDate.getTime();
+        }
+    }
+
+    /**
      * Parses the attachments from the {@code mapiMessage}.
      * The parsing will continue, even if a chunk is not found.
      * 
      * @param mapiMessage The message to parse.
-     * @throws ChunkNotFoundException If some data is not find in the {@code mapiMessage}.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
      */
     protected void parseAttachments(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         AttachmentChunks[] attachmentChunks = mapiMessage.getAttachmentFiles();
@@ -680,7 +742,8 @@ public class OutlookMessage {
         catch(ChunkNotFoundException ignored) { return false; }
         return true;
     }
-    
+
+    @FunctionalInterface
     private static interface SilentCallFailure {
         void invoke() throws ChunkNotFoundException;
     }
