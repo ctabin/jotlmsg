@@ -4,9 +4,8 @@ package ch.astorm.jotlmsg;
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.apache.poi.util.IOUtils;
@@ -84,7 +83,21 @@ public class OutlookMessageMSGTest {
         testMessage(message);
         testBinary(message, "generated/without-attachment.msg");
     }
-    
+
+    @Test
+    public void testMessageSent() throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.setSentDate(sdf.parse("28.02.2018"));
+
+        testMessage(message);
+    }
+
     private void testBinary(OutlookMessage message, String resPath) throws Exception {
         InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath);
         OutlookMessage source = new OutlookMessage(is);
@@ -112,7 +125,8 @@ public class OutlookMessageMSGTest {
         assertEquals(source.getPlainTextBody(), other.getPlainTextBody());
         assertEquals(source.getAllRecipients().size(), other.getAllRecipients().size());
         assertEquals(source.getAttachments().size(), other.getAttachments().size());
-        
+        assertEquals(source.getSentDate(), other.getSentDate());
+
         List<OutlookMessageRecipient> srcRecipients = source.getAllRecipients();
         List<OutlookMessageRecipient> parsedRecipients = source.getAllRecipients();
         for(int i=0 ; i<srcRecipients.size() ; ++i) {
