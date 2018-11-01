@@ -50,14 +50,14 @@ import org.apache.poi.hsmf.datatypes.PropertyValue;
 import org.apache.poi.hsmf.datatypes.Types;
 import org.apache.poi.hsmf.datatypes.Types.MAPIType;
 import org.apache.poi.poifs.filesystem.DirectoryEntry;
-import org.apache.poi.poifs.filesystem.NPOIFSFileSystem;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.util.LittleEndian;
 
 /**
  * Handles the writing of {@link MAPIProperty} instances.
  * This file is based on {@link org.apache.poi.hsmf.datatypes.PropertiesChunk}.
  * <p>This class provides a basic implementation to write fixed-length and variable-length
- * properties to a ${@link NPOIFSFileSystem}, but it doesn't handle the other data
+ * properties to a ${@link POIFSFileSystem}, but it doesn't handle the other data
  * such as list properties (since point 2.4.2.2) or GUID/Entry/String streams (point 2.2.3).
  * Those would be needed to make a more advanced integration with Microsoft Outlook and take
  * advantage of other features, like appointments, calendars, ...</p>

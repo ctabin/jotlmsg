@@ -167,19 +167,19 @@
     <dependency>
       <groupId>javax.mail</groupId>
       <artifactId>javax.mail-api</artifactId>
-      <version>1.6.1</version>
+      <version>1.6.2</version>
       <scope>provided</scope>
     </dependency>
     <!-- Apache POI -->
     <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi</artifactId>
-      <version>3.17</version>
+      <version>4.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi-scratchpad</artifactId>
-      <version>3.17</version>
+      <version>4.0.0</version>
     </dependency>
     <!-- Apache commons IO -->
     <dependency>
@@ -197,7 +197,7 @@
     <dependency>
       <groupId>com.sun.mail</groupId>
       <artifactId>javax.mail</artifactId>
-      <version>1.6.1</version>
+      <version>1.6.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
