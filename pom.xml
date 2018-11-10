@@ -24,7 +24,7 @@
   </developers>
   <scm>
     <connection>scm:git:git://github.com/ctabin/jotlmsg.git</connection>
-    <developerConnection>scm:git:ssh://github.com:ctabin/jotlmsg.git</developerConnection>
+    <developerConnection>scm:git:git@github.com:ctabin/jotlmsg.git</developerConnection>
     <url>http://github.com/ctabin/jotlmsg/tree/master</url>
   </scm>
   <distributionManagement>
@@ -124,14 +124,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.2</version>
-        <dependencies>
-          <dependency>
-            <groupId>org.apache.maven.scm</groupId>
-            <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.9.4</version>
-          </dependency>
-        </dependencies>
+        <version>2.5.3</version>
       </plugin>
       <!-- OSSRH distribution -->
       <plugin>
