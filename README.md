@@ -1,3 +1,5 @@
+[![Maven](https://img.shields.io/maven-central/v/ch.astorm/jotlmsg.svg)](https://search.maven.org/search?q=g:ch.astorm%20AND%20a:jotlmsg)
+
 # jotlmsg
 It's a simple API meant to easily generate Microsoft Outlook message files (.msg). 
 This library is based on [Apache POI](https://poi.apache.org) and is a 100% Java implementation.
