@@ -9,9 +9,9 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.apache.poi.util.IOUtils;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 public class OutlookMessageMSGTest {
     
