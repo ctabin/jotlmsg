@@ -50,6 +50,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -65,7 +66,6 @@ import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MailDateFormat;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
@@ -111,6 +111,11 @@ public class OutlookMessage {
     
     private final Map<Type, List<OutlookMessageRecipient>> recipients = new EnumMap<>(Type.class);
     private final List<OutlookMessageAttachment> attachments = new ArrayList<>(8);
+
+    /**
+     * Format of a MIME date that can be used as pattern in a {@link SimpleDateFormat}.
+     */
+    public static final String MIME_DATE_FORMAT = "EEE, d MMM yyyy HH:mm:ss Z (z)";
 
     /**
      * Creates a new empty message.
@@ -495,7 +500,7 @@ public class OutlookMessage {
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.HASATTACH, FLAG_READABLE | FLAG_WRITEABLE, attachments.isEmpty() ? new byte[]{0} : new byte[]{1}));
         if(sentDate==null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); } //mfUnsent - https://msdn.microsoft.com/en-us/library/ee160304(v=exchg.80).aspx
         else {
-            MailDateFormat mdf = new MailDateFormat();
+            SimpleDateFormat mdf = new SimpleDateFormat(MIME_DATE_FORMAT);
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(2).array())); //mfUnmodified
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.CLIENT_SUBMIT_TIME, FLAG_READABLE | FLAG_WRITEABLE, dateToBytes(sentDate)));
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.TRANSPORT_MESSAGE_HEADERS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("Date: "+mdf.format(sentDate))));
@@ -699,7 +704,7 @@ public class OutlookMessage {
                         int limit = line>=0 && semiColon>=0 ? Math.min(line, semiColon) :
                                     line>=0 ? line : semiColon;
                         String dateStr = value.substring(dateIdx+5, limit>=0 ? limit : value.length()).trim();
-                        MailDateFormat mdf = new MailDateFormat();
+                        SimpleDateFormat mdf = new SimpleDateFormat(MIME_DATE_FORMAT);
                         try { sentDate = mdf.parse(dateStr); }
                         catch(ParseException e) { /* ignored */ }
                     }

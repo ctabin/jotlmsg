@@ -165,6 +165,13 @@
       <version>1.6.2</version>
       <scope>provided</scope>
     </dependency>
+    <!-- com.sun.mail API, only used for MIME message generation -->
+    <dependency>
+      <groupId>com.sun.mail</groupId>
+      <artifactId>javax.mail</artifactId>
+      <version>1.6.2</version>
+      <optional>true</optional>
+    </dependency>
     <!-- Apache POI -->
     <dependency>
       <groupId>org.apache.poi</groupId>
@@ -187,12 +194,6 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.sun.mail</groupId>
-      <artifactId>javax.mail</artifactId>
-      <version>1.6.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
