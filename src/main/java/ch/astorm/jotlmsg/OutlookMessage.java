@@ -295,6 +295,8 @@ public class OutlookMessage {
      * If you don't expect to invoke {@link #writeTo(java.io.OutputStream) writeTo()} or {@link #toMimeMessage() toMimeMessage()} multiple times,
      * then consider using the {@link #addAttachment(java.lang.String, java.lang.String, ch.astorm.jotlmsg.OutlookMessageAttachment.InputStreamCreator) other}
      * method, which uses a {@link InputStreamCreator}.</p>
+     * <p>The <a href="https://fr.wikipedia.org/wiki/Type_de_m%C3%A9dias">MIME</a> type must be set
+     * accordingly to the {@code input}.</p>
      * 
      * @param name The name.
      * @param mimeType The MIME type.
@@ -312,7 +314,9 @@ public class OutlookMessage {
      * set to the attachment later.
      * <p>To use this method with a single-usage {@code InputStream}:</p>
      * <pre>message.addAttachment("myAttachment", "text/plain", a -&gt; myInputStream);</pre>
-     * 
+     * <p>The <a href="https://fr.wikipedia.org/wiki/Type_de_m%C3%A9dias">MIME</a> type must be set
+     * accordingly to the {@code input}.</p>
+     *
      * @param name The name.
      * @param mimeType The MIME type.
      * @param inputStreamCreator The {@code InputStream} creator or null.
@@ -353,7 +357,7 @@ public class OutlookMessage {
     /**
      * Creates a new {@code MimeMessage} from this {@code OutlookMessage}.
      * A new {@link Session} will be created with an empty {@code Properties} instance.
-     * 
+     *
      * @return A new {@code MimeMessage} instance.
      * @see #toMimeMessage(java.util.Properties)
      */

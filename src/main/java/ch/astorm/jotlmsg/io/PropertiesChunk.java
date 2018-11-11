@@ -57,7 +57,7 @@ import org.apache.poi.util.LittleEndian;
  * Handles the writing of {@link MAPIProperty} instances.
  * This file is based on {@link org.apache.poi.hsmf.datatypes.PropertiesChunk}.
  * <p>This class provides a basic implementation to write fixed-length and variable-length
- * properties to a ${@link POIFSFileSystem}, but it doesn't handle the other data
+ * properties to a {@link POIFSFileSystem}, but it doesn't handle the other data
  * such as list properties (since point 2.4.2.2) or GUID/Entry/String streams (point 2.2.3).
  * Those would be needed to make a more advanced integration with Microsoft Outlook and take
  * advantage of other features, like appointments, calendars, ...</p>
@@ -66,17 +66,25 @@ import org.apache.poi.util.LittleEndian;
  */
 public class PropertiesChunk {
     
-    //standard prefix, defined in the spec
+    /**
+     * Standard prefix of nodes. Defined by the MS specification.
+     */
     public static final String PREFIX = "__substg1.0_";
     
-    //standard property flags, defined in the spec
+    /**
+     * Flag to set for readable properties. Defined by the MS specification.
+     */
     public static final int FLAG_READABLE = 2;
-    public static final int FLAG_WRITEABLE = 4;
-    
-    private Map<MAPIProperty, PropertyValue> properties = new HashMap<MAPIProperty, PropertyValue>();
 
     /**
-     * Defines a property. Multi-valued properties are not (yet?) supported.
+     * Flag to set for writable properties. Defined by the MS specification.
+     */
+    public static final int FLAG_WRITEABLE = 4;
+    
+    private Map<MAPIProperty, PropertyValue> properties = new HashMap<>();
+
+    /**
+     * Defines a property. Multi-valued properties are not yet supported.
      */
     public void setProperty(PropertyValue value) { properties.put(value.getProperty(), value); }
     public PropertyValue getProperty(MAPIProperty property) { return properties.get(property); }
@@ -123,7 +131,7 @@ public class PropertiesChunk {
      * @throws IOException If an I/O error occurs.
      */
     protected List<PropertyValue> writeHeaderData(OutputStream out) throws IOException {
-        List<PropertyValue> variableLengthProperties = new ArrayList<PropertyValue>();
+        List<PropertyValue> variableLengthProperties = new ArrayList<>(properties.size());
         for(Entry<MAPIProperty, PropertyValue> entry : properties.entrySet()) {
             MAPIProperty property = entry.getKey();
             PropertyValue value = entry.getValue();
