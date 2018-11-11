@@ -52,6 +52,7 @@ public class OutlookMessageAttachment {
     /**
      * Represents an {@code InputStream} creator.
      */
+    @FunctionalInterface
     public static interface InputStreamCreator {
         
         /**
