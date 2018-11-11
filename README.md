@@ -17,6 +17,16 @@ If you're using maven, then simply add the following dependency:
 </dependency>
 ```
 
+If you're intending to use the ```toMimeMessage()``` methods, then you also
+need the following dependency:
+```xml
+<dependency>
+    <groupId>com.sun.mail</groupId>
+    <artifactId>javax.mail</artifactId>
+    <version>1.6.2</version>
+</dependency>
+```
+
 ## Usage examples
 
 Create a new message:
