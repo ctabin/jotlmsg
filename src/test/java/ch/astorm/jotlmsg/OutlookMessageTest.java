@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import org.apache.commons.io.IOUtils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -113,6 +114,7 @@ public class OutlookMessageTest {
         assertNotNull(sentDate);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("CET"));
         assertEquals(sdf.parse("28.02.2018"), sentDate);
     }
 
