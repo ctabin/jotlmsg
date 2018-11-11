@@ -454,9 +454,9 @@ public class OutlookMessage {
      * @throws IOException If an I/O error occurs.
      */
     public void writeTo(File file) throws IOException {
-        FileOutputStream fos = new FileOutputStream(file);
-        writeTo(fos);
-        fos.close();
+        try(FileOutputStream fos = new FileOutputStream(file)) {
+            writeTo(fos);
+        }
     }
     
     /**
