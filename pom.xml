@@ -176,12 +176,12 @@
     <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi</artifactId>
-      <version>4.0.0</version>
+      <version>4.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi-scratchpad</artifactId>
-      <version>4.0.0</version>
+      <version>4.0.1</version>
     </dependency>
     <!-- Apache commons IO -->
     <dependency>
@@ -193,7 +193,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>5.3.1</version>
+      <version>5.4.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
