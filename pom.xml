@@ -4,7 +4,7 @@
   <groupId>ch.astorm</groupId>
   <artifactId>jotlmsg</artifactId>
   <packaging>jar</packaging>
-  <version>1.5</version>
+  <version>1.6-SNAPSHOT</version>
   <name>${project.groupId}:${project.artifactId}</name>
   <description>Simple API to generate Microsoft Outlook messages (.msg)</description>
   <url>https://github.com/ctabin/jotlmsg</url>
@@ -26,7 +26,7 @@
     <connection>scm:git:git://github.com/ctabin/jotlmsg.git</connection>
     <developerConnection>scm:git:git@github.com:ctabin/jotlmsg.git</developerConnection>
     <url>http://github.com/ctabin/jotlmsg/tree/master</url>
-    <tag>jotlmsg-1.5</tag>
+    <tag>HEAD</tag>
   </scm>
   <distributionManagement>
     <snapshotRepository>
