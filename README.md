@@ -79,3 +79,5 @@ List<OutlookMessageAttachment> attachments = message.getAttachments();
 
 The current implementation allows to create simple msg files with many recipients (up to 2048) and attachments (up to 2048). 
 However, there is not current support of Microsoft Outlook advanced features like appointments or calendar integration, nor embedded messages.
+
+Unfortunately, only plain text messages are supported. It is not possible to inject HTML for now.
