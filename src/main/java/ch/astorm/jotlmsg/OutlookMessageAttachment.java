@@ -86,7 +86,7 @@ public class OutlookMessageAttachment {
         /**
          * Reads a new {@code InputStream} with the content of the source.
          * The first time this method is called, the source {@code InputStream} will be fully
-         * read and stored in-memory. Then, a new {@code ByteArrayInputStream} is
+         * read, closed and stored in-memory. Then, a new {@code ByteArrayInputStream} is
          * returned.
          * 
          * @param omt The attachment.
@@ -96,7 +96,8 @@ public class OutlookMessageAttachment {
         @Override
         public InputStream newInputStream(OutlookMessageAttachment omt) throws IOException {
             if(content==null) { 
-                content = IOUtils.toByteArray(source); 
+                content = IOUtils.toByteArray(source);
+                source.close();
                 source = null;
             }
             return new ByteArrayInputStream(content);

@@ -3,6 +3,9 @@ package ch.astorm.jotlmsg;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import javax.mail.Message;
@@ -13,6 +16,7 @@ import org.apache.commons.io.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 public class OutlookMessageMIMETest {
@@ -112,5 +116,77 @@ public class OutlookMessageMIMETest {
         
         String text2 = IOUtils.toString(multipart2.getBodyPart(1).getInputStream(), StandardCharsets.UTF_8);
         assertEquals("Hello, World!", text2);
+    }
+
+    @Test
+    public void testInvalidAttachment() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addAttachment("message.txt", "text/plain", a -> null);
+
+        File temporaryFile = new File("tmp");
+        try { message.writeTo(temporaryFile); assertTrue(false); }
+        catch(IllegalStateException ise) { }
+        temporaryFile.delete();
+
+        try { message.toMimeMessage(); assertTrue(false); }
+        catch(IllegalStateException ise) { }
+    }
+
+    @Test
+    public void testClosedStream() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        CheckableInputStream cis = new CheckableInputStream();
+        message.addAttachment("message.txt", "text/plain", a -> cis);
+
+        message.toMimeMessage();
+        assertTrue(cis.closed);
+
+        try { message.toMimeMessage(); assertTrue(false); }
+        catch(IllegalStateException ise) { }
+    }
+
+    @Test
+    public void testRepeteableStream() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        CheckableInputStream cis = new CheckableInputStream();
+        message.addAttachment("message.txt", "text/plain", cis);
+
+        message.toMimeMessage();
+        assertTrue(cis.closed);
+
+        message.toMimeMessage();
+    }
+
+    private static class CheckableInputStream extends InputStream {
+        private boolean closed = false;
+
+        @Override
+        public int read() throws IOException {
+            if(closed) { throw new IllegalStateException("stream is closed"); }
+            return -1;
+        }
+
+        @Override
+        public void close() throws IOException {
+            closed = true;
+            super.close();
+        }
     }
 }
