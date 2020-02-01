@@ -422,13 +422,14 @@ public class OutlookMessage {
         multipart.addBodyPart(body);
         
         for(OutlookMessageAttachment attachment : getAttachments()) {
-            InputStream inputStream = attachment.getNewInputStream();
-            if(inputStream!=null) { 
-                MimeBodyPart part = new MimeBodyPart();
-                part.setDataHandler(new DataHandler(new ByteArrayDataSource(inputStream, attachment.getMimeType())));
-                part.setFileName(attachment.getName());
-                multipart.addBodyPart(part);
-            }
+            String name = attachment.getName();
+            String mimeType = attachment.getMimeType();
+            byte[] data = readAttachement(attachment);
+
+            MimeBodyPart part = new MimeBodyPart();
+            part.setDataHandler(new DataHandler(new ByteArrayDataSource(data, mimeType)));
+            part.setFileName(name);
+            multipart.addBodyPart(part);
         }
         
         message.setContent(multipart);
@@ -561,12 +562,10 @@ public class OutlookMessage {
         int attachmentCounter = 0;
         for(OutlookMessageAttachment attachment : attachments) {
             if(attachmentCounter>=2048) { throw new RuntimeException("too many attachments (max=2048)"); } //limitation, see page 15, point 2.2.2
-            
-            InputStream is = attachment.getNewInputStream();
+
             String name = attachment.getName();
-            String mimeName = attachment.getMimeType();
-            byte[] data = IOUtils.toByteArray(is);
-            is.close();
+            String mimeType = attachment.getMimeType();
+            byte[] data = readAttachement(attachment);
             
             StoragePropertiesChunk attachStorage = new StoragePropertiesChunk();
             attachStorage.setProperty(new PropertyValue(MAPIProperty.OBJECT_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(7).array())); //MAPI_ATTACH
@@ -574,7 +573,7 @@ public class OutlookMessage {
                 attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
                 attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_LONG_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
             }
-            if(mimeName!=null) { attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_MIME_TAG, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); }
+            if(mimeType!=null) { attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_MIME_TAG, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); }
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_NUM, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(attachmentCounter).array()));
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_METHOD, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(1).array())); //ATTACH_BY_VALUE
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_DATA, FLAG_READABLE | FLAG_WRITEABLE, data));
@@ -589,6 +588,13 @@ public class OutlookMessage {
         
         fs.writeFilesystem(outputStream);
         fs.close();
+    }
+
+    private byte[] readAttachement(OutlookMessageAttachment attachment) throws IOException {
+        try(InputStream is = attachment.getNewInputStream()) {
+            if(is==null) { throw new IllegalStateException("null inputstream for attachement "+attachment.getName()+" ("+attachment.getMimeType()+")"); }
+            return IOUtils.toByteArray(is);
+        }
     }
 
     //extracted from org.apache.poi.hsmf.datatypes.TimePropertyValue
