@@ -5,6 +5,7 @@ import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -44,7 +45,7 @@ public class OutlookMessageMSGTest {
         message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
         message.addRecipient(OutlookMessageRecipient.Type.TO, "ctabin@jotlmsg.com");
         message.addRecipient(OutlookMessageRecipient.Type.CC, "cc@jotlmsg.com", "Copy");
-        message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes("UTF-8")));
+        message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes(StandardCharsets.UTF_8)));
 
         testMessage(message);
     }
@@ -62,9 +63,9 @@ public class OutlookMessageMSGTest {
         message.addRecipient(OutlookMessageRecipient.Type.CC, "cc2@jotlmsg.com", "John");
         message.addRecipient(OutlookMessageRecipient.Type.CC, "cc3@jotlmsg.com");
         message.addRecipient(OutlookMessageRecipient.Type.BCC, "bcc@jotlmsg.com");
-        message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes("UTF-8")));
-        message.addAttachment("message2.txt", "text/plain", new ByteArrayInputStream("Another attachment with content".getBytes("UTF-8")));
-        message.addAttachment("message3.txt", "text/html", new ByteArrayInputStream("<html><body>Some html page</body></html>".getBytes("UTF-8")));
+        message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes(StandardCharsets.UTF_8)));
+        message.addAttachment("message2.txt", "text/plain", new ByteArrayInputStream("Another attachment with content".getBytes(StandardCharsets.UTF_8)));
+        message.addAttachment("message3.txt", "text/html", new ByteArrayInputStream("<html><body>Some html page</body></html>".getBytes(StandardCharsets.UTF_8)));
         
         testMessage(message);
         testBinary(message, "generated/with-attachments-2.msg");
@@ -165,7 +166,6 @@ public class OutlookMessageMSGTest {
     
     @Test
     public void addManyAttachments() throws Exception {
-        String testFilename = "test.msg";
         int count = 40;
 
         OutlookMessage message = new OutlookMessage();
