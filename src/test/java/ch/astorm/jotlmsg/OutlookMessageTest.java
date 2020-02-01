@@ -4,6 +4,7 @@ package ch.astorm.jotlmsg;
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
@@ -101,7 +102,7 @@ public class OutlookMessageTest {
         
         assertEquals("myAttachement.txt", message.getAttachments().get(0).getName());
         
-        String data = IOUtils.toString(message.getAttachments().get(0).getNewInputStream(), "UTF-8");
+        String data = IOUtils.toString(message.getAttachments().get(0).getNewInputStream(), StandardCharsets.UTF_8);
         assertEquals("This is some basic content of attached file.", data);
     }
 

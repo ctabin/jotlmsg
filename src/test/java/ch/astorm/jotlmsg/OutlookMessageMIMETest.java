@@ -3,6 +3,7 @@ package ch.astorm.jotlmsg;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -28,9 +29,9 @@ public class OutlookMessageMIMETest {
         
         MimeMessage mimeMessage1 = message.toMimeMessage();
         
-        ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
-        mimeMessage1.writeTo(baos1);
-        baos1.close();
+        try(ByteArrayOutputStream baos1 = new ByteArrayOutputStream()) {
+            mimeMessage1.writeTo(baos1);
+        }
         
         assertNull(mimeMessage1.getFrom());
         assertNull(mimeMessage1.getSubject());
@@ -43,7 +44,7 @@ public class OutlookMessageMIMETest {
         assertEquals(1, multipart1.getCount());
         assertEquals("body", multipart1.getBodyPart(0).getFileName());
         
-        String body1 = IOUtils.toString(multipart1.getBodyPart(0).getInputStream());
+        String body1 = IOUtils.toString(multipart1.getBodyPart(0).getInputStream(), StandardCharsets.UTF_8);
         assertEquals(message.getPlainTextBody(), body1);
     }
     
@@ -57,15 +58,15 @@ public class OutlookMessageMIMETest {
         message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
         message.addRecipient(OutlookMessageRecipient.Type.TO, "ctabin@jotlmsg.com");
         message.addRecipient(OutlookMessageRecipient.Type.CC, "cc@jotlmsg.com", "Copy");
-        message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes("UTF-8")));
+        message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes(StandardCharsets.UTF_8)));
         
         // -----------------------------------------------------
         
         MimeMessage mimeMessage1 = message.toMimeMessage();
         
-        ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
-        mimeMessage1.writeTo(baos1);
-        baos1.close();
+        try(ByteArrayOutputStream baos1 = new ByteArrayOutputStream()) {
+            mimeMessage1.writeTo(baos1);
+        }
         
         assertEquals(1, mimeMessage1.getFrom().length);
         assertEquals("sender@jotlmsg.com", mimeMessage1.getFrom()[0].toString());
@@ -80,18 +81,18 @@ public class OutlookMessageMIMETest {
         assertEquals("body", multipart1.getBodyPart(0).getFileName());
         assertEquals("message.txt", multipart1.getBodyPart(1).getFileName());
         
-        String body1 = IOUtils.toString(multipart1.getBodyPart(0).getInputStream());
+        String body1 = IOUtils.toString(multipart1.getBodyPart(0).getInputStream(), StandardCharsets.UTF_8);
         assertEquals(message.getPlainTextBody(), body1);
         
-        String text1 = IOUtils.toString(multipart1.getBodyPart(1).getInputStream());
+        String text1 = IOUtils.toString(multipart1.getBodyPart(1).getInputStream(), StandardCharsets.UTF_8);
         assertEquals("Hello, World!", text1);
         
         // -----------------------------------------------------
         
         MimeMessage mimeMessage2 = message.toMimeMessage();
-        ByteArrayOutputStream baos2 = new ByteArrayOutputStream();
-        mimeMessage2.writeTo(baos2);
-        baos2.close();
+        try(ByteArrayOutputStream baos2 = new ByteArrayOutputStream()) {
+            mimeMessage2.writeTo(baos2);
+        }
         
         assertEquals(1, mimeMessage2.getFrom().length);
         assertEquals("sender@jotlmsg.com", mimeMessage2.getFrom()[0].toString());
@@ -106,10 +107,10 @@ public class OutlookMessageMIMETest {
         assertEquals("body", multipart2.getBodyPart(0).getFileName());
         assertEquals("message.txt", multipart2.getBodyPart(1).getFileName());
         
-        String body2 = IOUtils.toString(multipart2.getBodyPart(0).getInputStream());
+        String body2 = IOUtils.toString(multipart2.getBodyPart(0).getInputStream(), StandardCharsets.UTF_8);
         assertEquals(message.getPlainTextBody(), body2);
         
-        String text2 = IOUtils.toString(multipart2.getBodyPart(1).getInputStream());
+        String text2 = IOUtils.toString(multipart2.getBodyPart(1).getInputStream(), StandardCharsets.UTF_8);
         assertEquals("Hello, World!", text2);
     }
 }
