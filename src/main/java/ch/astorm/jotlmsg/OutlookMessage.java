@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -417,7 +418,7 @@ public class OutlookMessage {
         if(plainText==null) { throw new MessagingException("missing body"); }
         MimeBodyPart body = new MimeBodyPart();
         body.setFileName("body");
-        body.setText(getPlainTextBody(), "UTF-8", "plain");
+        body.setText(getPlainTextBody(), StandardCharsets.UTF_8.name(), "plain");
         multipart.addBodyPart(body);
         
         for(OutlookMessageAttachment attachment : getAttachments()) {
