@@ -169,7 +169,6 @@
       <groupId>javax.mail</groupId>
       <artifactId>javax.mail-api</artifactId>
       <version>1.6.2</version>
-      <scope>provided</scope>
     </dependency>
     <!-- com.sun.mail API, only used for MIME message generation -->
     <dependency>
