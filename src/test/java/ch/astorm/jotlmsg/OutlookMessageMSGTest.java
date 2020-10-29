@@ -68,6 +68,11 @@ public class OutlookMessageMSGTest {
         message.addAttachment("message3.txt", "text/html", new ByteArrayInputStream("<html><body>Some html page</body></html>".getBytes(StandardCharsets.UTF_8)));
 
         testMessage(message);
+        
+//        // There was a bug regarding the mimetype, so just generate a new reference file.
+//        File msgFile = new File("src/test/resources/ch/astorm/jotlmsg/generated/with-attachments-2.msg");        
+//        message.writeTo(msgFile);
+        
         testBinary(message, "generated/with-attachments-2.msg");
     }
     
@@ -128,6 +133,17 @@ public class OutlookMessageMSGTest {
         assertEquals(source.getAttachments().size(), other.getAttachments().size());
         assertEquals(source.getSentDate(), other.getSentDate());
 
+        if(source.getReplyTo()!=null && other.getReplyTo()!=null) {
+            assertEquals(source.getReplyTo().size(), other.getReplyTo().size());
+            List<String> srcReplyToRecipients = source.getReplyTo();
+            List<String> parsedReplyToRecipients = other.getReplyTo();
+            for(int i=0 ; i<srcReplyToRecipients.size() ; ++i) {
+            	String srcReplyToRecipient = srcReplyToRecipients.get(i);
+            	String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
+                assertEquals(srcReplyToRecipient, parsedReplyToRecipient);
+            }
+        }
+        
         List<OutlookMessageRecipient> srcRecipients = source.getAllRecipients();
         List<OutlookMessageRecipient> parsedRecipients = other.getAllRecipients();
         for(int i=0 ; i<srcRecipients.size() ; ++i) {
@@ -145,7 +161,6 @@ public class OutlookMessageMSGTest {
             OutlookMessageAttachment parsedAttachment = parsedAttachments.get(i);
             assertEquals(srcAttachment.getName(), parsedAttachment.getName());
             assertEquals(srcAttachment.getMimeType(), parsedAttachment.getMimeType());
-            
             byte[] srcData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
             byte[] parData = IOUtils.toByteArray(parsedAttachment.getNewInputStream());
             assertEquals(srcData.length, parData.length);
@@ -154,7 +169,7 @@ public class OutlookMessageMSGTest {
     }
     
     @Test
-    public void addManyRecipients() throws Exception {
+    public void testaddManyRecipients() throws Exception {
         OutlookMessage message = new OutlookMessage();
         IntStream.range(0,40).forEach(i -> message.addRecipient(Type.TO, "user" + i + "@xyz.com"));
 
@@ -165,7 +180,7 @@ public class OutlookMessageMSGTest {
     }
     
     @Test
-    public void addManyAttachments() throws Exception {
+    public void testaddManyAttachments() throws Exception {
         int count = 40;
 
         OutlookMessage message = new OutlookMessage();
@@ -175,6 +190,10 @@ public class OutlookMessageMSGTest {
         message.setSubject("betreff");
         message.setPlainTextBody("content");
 
+//        // There was a bug regarding the mimetype, so just generate a new reference file.
+//        File msgFile = new File("src/test/resources/ch/astorm/jotlmsg/generated/many-attachments.msg");        
+//        message.writeTo(msgFile);
+        
         testBinary(message, "generated/many-attachments.msg");
     }
 }
