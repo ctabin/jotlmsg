@@ -31,7 +31,7 @@ public class OneOffEntryIDStructureTest {
                     ByteChunk bc = (ByteChunk)chunk;
                     msgBytes = bc.getValue();
                 }
-            }        
+            }
         }
         assertNotNull(msgBytes);
         FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, msgBytes);
@@ -69,7 +69,7 @@ public class OneOffEntryIDStructureTest {
                     ByteChunk bc = (ByteChunk)chunk;
                     msgBytes = bc.getValue();
                 }
-            }        
+            }
         }
         assertNotNull(msgBytes);
         FlatEntryListStructure<OneOffEntryIDStructure> fels1 = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, msgBytes);
@@ -80,17 +80,17 @@ public class OneOffEntryIDStructureTest {
         byte[] newBytes = fels2.toBytes();
         // assertArrayEquals(msgBytes, newBytes); doesn't work: alignment bytes with random values in msg file!  
         fels2 = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, newBytes);
-     
+        
         assertNotNull(fels1);
         assertNotNull(fels2);
         assertEquals(fels1.getCount(), fels2.getCount());
         assertEquals(fels1.getSize(), fels2.getSize());
-      
+        
         Iterator<OneOffEntryIDStructure> ooels1Iterator = fels1.iterator();
         Iterator<OneOffEntryIDStructure> ooels2Iterator = fels2.iterator();
         while(ooels1Iterator.hasNext() && ooels2Iterator.hasNext()) {
-        	 OneOffEntryIDStructure ooe1 = ooels1Iterator.next();
-        	 OneOffEntryIDStructure ooe2 = ooels2Iterator.next();
+             OneOffEntryIDStructure ooe1 = ooels1Iterator.next();
+             OneOffEntryIDStructure ooe2 = ooels2Iterator.next();
              assertEquals(ooe1.getSize(), ooe2.getSize());
              assertArrayEquals(ooe1.getEntryID(), ooe2.getEntryID());
              assertEquals(ooe1.getDisplayName(), ooe2.getDisplayName());
@@ -112,21 +112,21 @@ public class OneOffEntryIDStructureTest {
         
         byte[] newBytes = fels1.toBytes();
         FlatEntryListStructure<OneOffEntryIDStructure> fels2 = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, newBytes);
-     
+        
         assertNotNull(fels1);
         assertNotNull(fels2);
         assertEquals(fels1.getCount(), fels2.getCount());
         assertEquals(fels1.getSize(), fels2.getSize());
-      
+        
         Iterator<OneOffEntryIDStructure> ooels1Iterator = fels1.iterator();
         Iterator<OneOffEntryIDStructure> ooels2Iterator = fels1.iterator();
         while(ooels1Iterator.hasNext() && ooels2Iterator.hasNext()) {
-        	 OneOffEntryIDStructure ooe1 = ooels1Iterator.next();
-        	 OneOffEntryIDStructure ooe2 = ooels2Iterator.next();
+             OneOffEntryIDStructure ooe1 = ooels1Iterator.next();
+             OneOffEntryIDStructure ooe2 = ooels2Iterator.next();
              assertEquals(ooe1.getSize(), ooe2.getSize());
              assertArrayEquals(ooe1.getEntryID(), ooe2.getEntryID());
              assertEquals(ooe1.getDisplayName(), ooe2.getDisplayName());
              assertEquals(ooe1.getEmailAddress(), ooe2.getEmailAddress());
         }
-    }    
+    }
 }
