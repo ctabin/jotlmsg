@@ -10,14 +10,14 @@ import java.nio.ByteBuffer;
  *
  */
 public class FlatEntryStructureFactory<T extends FlatEntryStructure> {
-	public T createFlatEntryStructure(Class<T> type, ByteBuffer bf) {
-		T fes = null;
-		try {
-			fes = type.getDeclaredConstructor(new Class[] {ByteBuffer.class}).newInstance(bf);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-		}
-		return fes;
-	}
+    public T createFlatEntryStructure(Class<T> type, ByteBuffer bf) {
+        T fes = null;
+        try {
+            fes = type.getDeclaredConstructor(new Class[] { ByteBuffer.class }).newInstance(bf);
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                | NoSuchMethodException | SecurityException e) {
+            e.printStackTrace();
+        }
+        return fes;
+    }
 }
