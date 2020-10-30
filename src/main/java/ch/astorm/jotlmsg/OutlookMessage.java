@@ -524,18 +524,18 @@ public class OutlookMessage {
 	        String replyToRecipentNames = null;
 	        boolean first = true;
 	        for(String replyToRecipent : replyToRecipents) {
-	        	if(first) {
-	        		replyToRecipentNames = new String();
-	           		first = false;        		
-	        	} else {
-	        		replyToRecipentNames += ";";
-	        	}
-	        	replyToRecipentNames += replyToRecipent; 
-	        	fels.addFlatEntryStructure(new OneOffEntryIDStructure(replyToRecipent) );
+	            if(first) {
+	                replyToRecipentNames = new String();
+	                first = false;
+	            } else {
+	                replyToRecipentNames += ";";
+	            }
+	            replyToRecipentNames += replyToRecipent; 
+	            fels.addFlatEntryStructure(new OneOffEntryIDStructure(replyToRecipent) );
 	        }
 	
-	        if(replyToRecipentNames!=null && fels!=null && fels.getCount()>0) {
-	        	// Note: There must be responding REPLY_RECIPIENT_ENTRIES and REPLY_RECIPIENT_NAMES MAPIProperties.
+	        if(replyToRecipentNames!=null && fels.getCount()>0) {
+	            // Note: There must be responding REPLY_RECIPIENT_ENTRIES and REPLY_RECIPIENT_NAMES MAPIProperties.
 	            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.REPLY_RECIPIENT_ENTRIES, FLAG_READABLE | FLAG_WRITEABLE, fels.toBytes())); 
 	            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.REPLY_RECIPIENT_NAMES, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(replyToRecipentNames))); 
 	        } 
