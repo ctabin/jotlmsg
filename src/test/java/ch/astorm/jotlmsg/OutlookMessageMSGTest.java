@@ -7,6 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.apache.poi.util.IOUtils;
@@ -22,7 +24,8 @@ public class OutlookMessageMSGTest {
         message.setSubject("This is a message");
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.\nFind some accents: àïâç&@+\"{}$");
         message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
-
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        
         testMessage(message);
     }
     
@@ -195,5 +198,19 @@ public class OutlookMessageMSGTest {
 //        message.writeTo(msgFile);
         
         testBinary(message, "generated/many-attachments.msg");
+    }
+    
+    @Test
+    public void testManyReplyTos() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message with replyto addresses.\n\n.Bye.");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        List<String> replytos = new ArrayList<String>();
+        IntStream.range(0,40).forEach(i -> replytos.add("reply"+i+"@jotlmsg.com"));
+        message.setReplyTo(replytos);
+        
+        testMessage(message);
     }
 }
