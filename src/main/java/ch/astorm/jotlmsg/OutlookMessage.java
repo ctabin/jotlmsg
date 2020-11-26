@@ -37,7 +37,9 @@ package ch.astorm.jotlmsg;
 import ch.astorm.jotlmsg.OutlookMessageAttachment.InputStreamCreator;
 import ch.astorm.jotlmsg.OutlookMessageAttachment.MemoryInputStreamCreator;
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
+import ch.astorm.jotlmsg.io.FlatEntryListStructure;
 import ch.astorm.jotlmsg.io.MessagePropertiesChunk;
+import ch.astorm.jotlmsg.io.OneOffEntryIDStructure;
 import ch.astorm.jotlmsg.io.PropertiesChunk;
 import static ch.astorm.jotlmsg.io.PropertiesChunk.FLAG_READABLE;
 import static ch.astorm.jotlmsg.io.PropertiesChunk.FLAG_WRITEABLE;
@@ -520,7 +522,7 @@ public class OutlookMessage {
 
         //creates the reply recipients
         if(replyToRecipents!=null) {
-            FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<OneOffEntryIDStructure>();
+            FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>();
 	        String replyToRecipentNames = null;
 	        boolean first = true;
 	        for(String replyToRecipent : replyToRecipents) {
@@ -670,7 +672,7 @@ public class OutlookMessage {
             }        
         }
         if(replyToRecipentBytes!=null) {
-            FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, replyToRecipentBytes);
+            FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>(OneOffEntryIDStructure.class, replyToRecipentBytes);
             List<String> replyToRecipents = new ArrayList<String>();
             for(OneOffEntryIDStructure ooes : fels) {
             	replyToRecipents.add(ooes.getEmailAddress());
