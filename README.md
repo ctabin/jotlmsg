@@ -65,6 +65,14 @@ List<OutlookMessageRecipient> bccRecipients = message.getRecipients(Type.BCC);
 List<OutlookMessageRecipient> allRecipients = message.getAllRecipients();
 ```
 
+Managing optional replyto recipients:
+```Java
+OutlookMessage message = new OutlookMessage();
+message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+
+List<String> replyToRecipients = message.getReplyTo();
+```
+
 Managing attachments:
 ```Java
 OutlookMessage message = new OutlookMessage();
