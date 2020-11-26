@@ -85,10 +85,10 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.0</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+<!--           <source>1.8</source>
+          <target>1.8</target> -->
           <!-- Replace source and target tag with release tag for compilation with JDK > 1.8 -->
-          <!-- <release>8</release> -->
+          <release>8</release>
         </configuration>
       </plugin>
       <!-- Javadoc generation -->
