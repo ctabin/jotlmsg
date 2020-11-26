@@ -1,4 +1,4 @@
-package ch.astorm.jotlmsg;
+package ch.astorm.jotlmsg.io;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -21,7 +21,7 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
     /**
      * Returns the number of FlatEntryStructures.
      * 
-     * @return
+     * @return Number of structures.
      */
     public long getCount() {
         return count;
@@ -30,16 +30,16 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
     /**
      * Returns the number of total bytes of all FlatEntryStructures.
      * 
-     * @return
+     * @return Number of total bytes.
      */
     public long getSize() {
         return size;
     }
 
     /**
-     * Returns a list of FlatEntryStructures.
+     * Returns a list of FlatEntryStructures or subclass structures.
      * 
-     * @return
+     * @return List of structures.
      */
     public List<T> getFlatEntryStructures() {
         return flatEntryStructures;
@@ -48,7 +48,7 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
     /**
      * Sets a list of FlatEntryStructures.
      * 
-     * @param flatEntries
+     * @param flatEntries List of FlatEntryStructures or subclass structures to set.
      */
     public void setFlatEntryStructures(List<T> flatEntries) {
         this.flatEntryStructures = flatEntries;
@@ -57,7 +57,7 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
     /**
      * Adds a FlatEntryStructure.
      * 
-     * @param flatEntry
+     * @param flatEntry FlatEntryStructure or subclass to add.
      */
     public void addFlatEntryStructure(T flatEntry) {
         flatEntryStructures.add(flatEntry);
@@ -77,17 +77,17 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
     }
 
     /**
-     * Constructor, creates the java representation.
+     * Constructor, creates an empty java list representation.
      * 
      */
     public FlatEntryListStructure() {
     };
 
     /**
-     * Constructor, creates the java representation.
+     * Constructor, creates a java list representation from byte array.
      * 
-     * @param clazz
-     * @param bytes
+     * @param clazz Class/subclass of {@link ch.astorm.jotlmsg.io.FlatEntryListStructure} used to create list elements.
+     * @param bytes Byte array source.
      */
     public FlatEntryListStructure(Class<T> clazz, byte[] bytes) {
         ByteBuffer bf = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN);
@@ -106,7 +106,7 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
     /**
      * Creates a byte array.
      * 
-     * @return
+     * @return Byte array representation of this list.
      */
     public byte[] toBytes() {
         // Calculate total size of ByteBuffer
