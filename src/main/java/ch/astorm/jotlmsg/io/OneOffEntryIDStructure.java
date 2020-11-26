@@ -1,4 +1,4 @@
-package ch.astorm.jotlmsg;
+package ch.astorm.jotlmsg.io;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -35,7 +35,7 @@ public class OneOffEntryIDStructure extends FlatEntryStructure {
     /**
      * Constructor for byte parsing.
      * 
-     * @param bf
+     * @param bf {@link java.nio.ByteBuffer} source for parsing.
      */
     public OneOffEntryIDStructure(ByteBuffer bf) {
         super(bf);
@@ -60,7 +60,7 @@ public class OneOffEntryIDStructure extends FlatEntryStructure {
     /**
      * Constructor for byte conversion.
      * 
-     * @param emailAddress
+     * @param emailAddress ReplyTo email address.
      */
     public OneOffEntryIDStructure(String emailAddress) {
         this(emailAddress, emailAddress);
@@ -69,8 +69,8 @@ public class OneOffEntryIDStructure extends FlatEntryStructure {
     /**
      * Constructor for byte conversion.
      * 
-     * @param displayName
-     * @param emailAddress
+     * @param displayName ReplyTo display name of email address.
+     * @param emailAddress ReplyTo email address.
      */
     public OneOffEntryIDStructure(String displayName, String emailAddress) {
         super();
@@ -104,7 +104,7 @@ public class OneOffEntryIDStructure extends FlatEntryStructure {
     /**
      * Returns the displayName.
      * 
-     * @return
+     * @return The displayName
      */
     public String getDisplayName() {
         return displayName;
@@ -113,7 +113,7 @@ public class OneOffEntryIDStructure extends FlatEntryStructure {
     /**
      * Returns the emailAddress.
      * 
-     * @return
+     * @return The emailAddress
      */
     public String getEmailAddress() {
         return emailAddress;
