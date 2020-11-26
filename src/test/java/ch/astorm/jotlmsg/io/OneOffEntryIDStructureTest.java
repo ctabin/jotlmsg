@@ -1,4 +1,4 @@
-package ch.astorm.jotlmsg;
+package ch.astorm.jotlmsg.io;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +19,7 @@ public class OneOffEntryIDStructureTest {
 
     @Test
     public void testOneOffEntryIDStructure1() throws IOException {
-        InputStream msg = OneOffEntryIDStructureTest.class.getResourceAsStream("msoutlook/replyto.msg");
+        InputStream msg = OneOffEntryIDStructureTest.class.getResourceAsStream("../msoutlook/replyto.msg");
         MAPIMessage mapiMessage = new MAPIMessage(msg);
 
         byte[] msgBytes = null;
@@ -34,7 +34,7 @@ public class OneOffEntryIDStructureTest {
             }
         }
         assertNotNull(msgBytes);
-        FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, msgBytes);
+        FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>(OneOffEntryIDStructure.class, msgBytes);
         
         assertNotNull(fels);
         assertEquals(2, fels.getCount());
@@ -57,7 +57,7 @@ public class OneOffEntryIDStructureTest {
 
     @Test
     public void testOneOffEntryIDStructure2() throws IOException {
-        InputStream msg = OneOffEntryIDStructureTest.class.getResourceAsStream("msoutlook/replyto.msg");
+        InputStream msg = OneOffEntryIDStructureTest.class.getResourceAsStream("../msoutlook/replyto.msg");
         MAPIMessage mapiMessage = new MAPIMessage(msg);
         
         byte[] msgBytes = null;
@@ -72,9 +72,9 @@ public class OneOffEntryIDStructureTest {
             }
         }
         assertNotNull(msgBytes);
-        FlatEntryListStructure<OneOffEntryIDStructure> fels1 = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, msgBytes);
+        FlatEntryListStructure<OneOffEntryIDStructure> fels1 = new FlatEntryListStructure<>(OneOffEntryIDStructure.class, msgBytes);
         
-        FlatEntryListStructure<OneOffEntryIDStructure> fels2 = new FlatEntryListStructure<OneOffEntryIDStructure>();
+        FlatEntryListStructure<OneOffEntryIDStructure> fels2 = new FlatEntryListStructure<>();
         fels2.addFlatEntryStructure(new OneOffEntryIDStructure("reply1@test.com", "reply1@test.com"));
         fels2.addFlatEntryStructure(new OneOffEntryIDStructure("reply2@test.com", "reply2@test.com"));
         byte[] newBytes = fels2.toBytes();
@@ -103,7 +103,7 @@ public class OneOffEntryIDStructureTest {
     
     @Test
     public void testOneOffEntryIDStructure3() throws IOException {
-        FlatEntryListStructure<OneOffEntryIDStructure> fels1 = new FlatEntryListStructure<OneOffEntryIDStructure>();
+        FlatEntryListStructure<OneOffEntryIDStructure> fels1 = new FlatEntryListStructure<>();
         fels1.addFlatEntryStructure(new OneOffEntryIDStructure("Reply Address", "reply@test.com"));
         fels1.addFlatEntryStructure(new OneOffEntryIDStructure("reply2@test.com"));
         fels1.addFlatEntryStructure(new OneOffEntryIDStructure("Sales Department", "sales@test.com"));
@@ -111,7 +111,7 @@ public class OneOffEntryIDStructureTest {
         fels1.addFlatEntryStructure(new OneOffEntryIDStructure("Joe Grinner", "joe.grinner@test.com"));
         
         byte[] newBytes = fels1.toBytes();
-        FlatEntryListStructure<OneOffEntryIDStructure> fels2 = new FlatEntryListStructure<OneOffEntryIDStructure>(OneOffEntryIDStructure.class, newBytes);
+        FlatEntryListStructure<OneOffEntryIDStructure> fels2 = new FlatEntryListStructure<>(OneOffEntryIDStructure.class, newBytes);
         
         assertNotNull(fels1);
         assertNotNull(fels2);

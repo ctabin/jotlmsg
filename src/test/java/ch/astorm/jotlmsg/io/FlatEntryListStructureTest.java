@@ -1,4 +1,4 @@
-package ch.astorm.jotlmsg;
+package ch.astorm.jotlmsg.io;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +19,7 @@ public class FlatEntryListStructureTest {
 
     @Test
     public void testFlatEntryListStructure1() throws IOException {
-        InputStream msg = OneOffEntryIDStructureTest.class.getResourceAsStream("msoutlook/replyto.msg");
+        InputStream msg = OneOffEntryIDStructureTest.class.getResourceAsStream("../msoutlook/replyto.msg");
         MAPIMessage mapiMessage = new MAPIMessage(msg);
         
         byte[] msgBytes = null;
@@ -34,9 +34,9 @@ public class FlatEntryListStructureTest {
             }        
         }
         assertNotNull(msgBytes);
-        FlatEntryListStructure<FlatEntryStructure> fels1 = new FlatEntryListStructure<FlatEntryStructure>(FlatEntryStructure.class, msgBytes);
+        FlatEntryListStructure<FlatEntryStructure> fels1 = new FlatEntryListStructure<>(FlatEntryStructure.class, msgBytes);
         byte[] newBytes = fels1.toBytes();
-        FlatEntryListStructure<FlatEntryStructure> fels2 = new FlatEntryListStructure<FlatEntryStructure>(FlatEntryStructure.class, newBytes);
+        FlatEntryListStructure<FlatEntryStructure> fels2 = new FlatEntryListStructure<>(FlatEntryStructure.class, newBytes);
      
         assertNotNull(fels1);
         assertNotNull(fels2);
@@ -58,7 +58,7 @@ public class FlatEntryListStructureTest {
 	
     @Test
     public void testFlatEntryListStructure2() throws IOException {
-        InputStream msg = FlatEntryListStructureTest.class.getResourceAsStream("msoutlook/replyto.msg");
+        InputStream msg = FlatEntryListStructureTest.class.getResourceAsStream("../msoutlook/replyto.msg");
         MAPIMessage mapiMessage = new MAPIMessage(msg);
         
         byte[] msgBytes = null;
@@ -74,7 +74,7 @@ public class FlatEntryListStructureTest {
         }
         assertNotNull(msgBytes);
         
-        FlatEntryListStructure<FlatEntryStructure> fels = new FlatEntryListStructure<FlatEntryStructure>(FlatEntryStructure.class, msgBytes);
+        FlatEntryListStructure<FlatEntryStructure> fels = new FlatEntryListStructure<>(FlatEntryStructure.class, msgBytes);
         assertEquals(2, fels.getCount());
         assertEquals(208, fels.getSize());
         
@@ -96,7 +96,7 @@ public class FlatEntryListStructureTest {
     
     @Test
     public void testFlatEntryListStructure3() throws IOException {
-        FlatEntryListStructure<FlatEntryStructure> fels = new FlatEntryListStructure<FlatEntryStructure>();
+        FlatEntryListStructure<FlatEntryStructure> fels = new FlatEntryListStructure<>();
         fels.addFlatEntryStructure(new FlatEntryStructure());
         fels.addFlatEntryStructure(new OneOffEntryIDStructure("test@test.com"));
         assertEquals(2, fels.getCount());
@@ -104,7 +104,7 @@ public class FlatEntryListStructureTest {
     
     @Test
     public void testFlatEntryListStructure4() throws IOException {
-        FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<OneOffEntryIDStructure>();
+        FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>();
         fels.addFlatEntryStructure(new OneOffEntryIDStructure("test@test.com"));
         assertEquals(1, fels.getCount());
     }
