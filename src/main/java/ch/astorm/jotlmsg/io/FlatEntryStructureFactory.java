@@ -1,4 +1,4 @@
-package ch.astorm.jotlmsg;
+package ch.astorm.jotlmsg.io;
 
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;

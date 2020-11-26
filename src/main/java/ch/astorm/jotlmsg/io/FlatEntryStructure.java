@@ -1,4 +1,4 @@
-package ch.astorm.jotlmsg;
+package ch.astorm.jotlmsg.io;
 
 import java.nio.ByteBuffer;
 
@@ -15,7 +15,7 @@ public class FlatEntryStructure {
     /**
      * Returns the number of bytes of following EntryID field.
      * 
-     * @return
+     * @return Number of bytes.
      */
     public long getSize() {
         return size;
@@ -24,7 +24,7 @@ public class FlatEntryStructure {
     /**
      * Returns the EntryID bytes.
      * 
-     * @return
+     * @return Byte array representation of EntryID.
      */
     public byte[] getEntryID() {
         return entryID;
@@ -33,7 +33,7 @@ public class FlatEntryStructure {
     /**
      * Sets the EntryID bytes.
      * 
-     * @param entryID
+     * @param entryID Byte array data to set.
      */
     public void setEntryID(byte[] entryID) {
         this.entryID = entryID;
@@ -49,7 +49,7 @@ public class FlatEntryStructure {
     /**
      * Constructor for byte parsing.
      * 
-     * @param bf
+     * @param bf {@link java.nio.ByteBuffer} source for parsing. 
      */
     public FlatEntryStructure(ByteBuffer bf) {
         // Size is stored in 4 bytes.
