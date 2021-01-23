@@ -66,7 +66,7 @@ public class OutlookMessageMSGTest {
         message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes(StandardCharsets.UTF_8)));
         message.addAttachment("message2.txt", "text/plain", new ByteArrayInputStream("Another attachment with content".getBytes(StandardCharsets.UTF_8)));
         message.addAttachment("message3.txt", "text/html", new ByteArrayInputStream("<html><body>Some html page</body></html>".getBytes(StandardCharsets.UTF_8)));
-        
+
         testMessage(message);
         testBinary(message, "generated/with-attachments-2.msg");
     }
@@ -100,10 +100,10 @@ public class OutlookMessageMSGTest {
     }
 
     private void testBinary(OutlookMessage message, String resPath) throws Exception {
-        InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath);
-        OutlookMessage source = new OutlookMessage(is);
-        compareMessage(source, message);
-        is.close();
+        try(InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath)) {
+            OutlookMessage source = new OutlookMessage(is);
+            compareMessage(source, message);
+        }
     }
     
     private void testMessage(OutlookMessage source) throws Exception {
@@ -129,7 +129,7 @@ public class OutlookMessageMSGTest {
         assertEquals(source.getSentDate(), other.getSentDate());
 
         List<OutlookMessageRecipient> srcRecipients = source.getAllRecipients();
-        List<OutlookMessageRecipient> parsedRecipients = source.getAllRecipients();
+        List<OutlookMessageRecipient> parsedRecipients = other.getAllRecipients();
         for(int i=0 ; i<srcRecipients.size() ; ++i) {
             OutlookMessageRecipient srcRecipient = srcRecipients.get(i);
             OutlookMessageRecipient parsedRecipient = parsedRecipients.get(i);
@@ -139,7 +139,7 @@ public class OutlookMessageMSGTest {
         }
         
         List<OutlookMessageAttachment> srcAttachments = source.getAttachments();
-        List<OutlookMessageAttachment> parsedAttachments = source.getAttachments();
+        List<OutlookMessageAttachment> parsedAttachments = other.getAttachments();
         for(int i=0 ; i<srcAttachments.size() ; ++i) {
             OutlookMessageAttachment srcAttachment = srcAttachments.get(i);
             OutlookMessageAttachment parsedAttachment = parsedAttachments.get(i);
@@ -147,7 +147,7 @@ public class OutlookMessageMSGTest {
             assertEquals(srcAttachment.getMimeType(), parsedAttachment.getMimeType());
             
             byte[] srcData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
-            byte[] parData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
+            byte[] parData = IOUtils.toByteArray(parsedAttachment.getNewInputStream());
             assertEquals(srcData.length, parData.length);
             assertArrayEquals(srcData, parData);
         }
