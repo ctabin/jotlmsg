@@ -417,7 +417,6 @@ public class OutlookMessage {
         String plainText = getPlainTextBody();
         if(plainText==null) { throw new MessagingException("missing body"); }
         MimeBodyPart body = new MimeBodyPart();
-        body.setFileName("body");
         body.setText(getPlainTextBody(), StandardCharsets.UTF_8.name(), "plain");
         multipart.addBodyPart(body);
         

@@ -46,7 +46,7 @@ public class OutlookMessageMIMETest {
         
         Multipart multipart1 = (Multipart)mimeMessage1.getContent();
         assertEquals(1, multipart1.getCount());
-        assertEquals("body", multipart1.getBodyPart(0).getFileName());
+        assertNull(multipart1.getBodyPart(0).getFileName());
         
         String body1 = IOUtils.toString(multipart1.getBodyPart(0).getInputStream(), StandardCharsets.UTF_8);
         assertEquals(message.getPlainTextBody(), body1);
@@ -82,7 +82,7 @@ public class OutlookMessageMIMETest {
         
         Multipart multipart1 = (Multipart)mimeMessage1.getContent();
         assertEquals(2, multipart1.getCount());
-        assertEquals("body", multipart1.getBodyPart(0).getFileName());
+        assertNull(multipart1.getBodyPart(0).getFileName());
         assertEquals("message.txt", multipart1.getBodyPart(1).getFileName());
         
         String body1 = IOUtils.toString(multipart1.getBodyPart(0).getInputStream(), StandardCharsets.UTF_8);
@@ -108,7 +108,7 @@ public class OutlookMessageMIMETest {
         
         Multipart multipart2 = (Multipart)mimeMessage2.getContent();
         assertEquals(2, multipart2.getCount());
-        assertEquals("body", multipart2.getBodyPart(0).getFileName());
+        assertNull(multipart2.getBodyPart(0).getFileName());
         assertEquals("message.txt", multipart2.getBodyPart(1).getFileName());
         
         String body2 = IOUtils.toString(multipart2.getBodyPart(0).getInputStream(), StandardCharsets.UTF_8);
