@@ -103,6 +103,7 @@
             </goals>
             <configuration>
               <show>public</show>
+              <source>8</source>
             </configuration>
           </execution>
         </executions>
