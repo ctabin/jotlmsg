@@ -6,7 +6,6 @@ import java.nio.ByteBuffer;
  * Represents an [MS-OXCDATA] 2.3.2 FlatEntry Structure in Java.
  * 
  * @author Guido Stein
- *
  */
 public class FlatEntryStructure {
     private long size; // Number of bytes of following EntryID field.
