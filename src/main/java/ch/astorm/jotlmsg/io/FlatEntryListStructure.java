@@ -10,13 +10,12 @@ import java.util.List;
  * Represents an [MS-OXCDATA] 2.3.3 FlatEntryList Structure in Java.
  * 
  * @author Guido Stein
- *
  */
 public class FlatEntryListStructure<T extends FlatEntryStructure> implements Iterable<T> {
     private long count; // Number of FlatEntryStructures.
     private long size; // Number of bytes of all FlatEntryStructures.
-    private List<T> flatEntryStructures = new ArrayList<T>();
-    private FlatEntryStructureFactory<T> fesf = new FlatEntryStructureFactory<T>();
+    private List<T> flatEntryStructures = new ArrayList<>();
+    private FlatEntryStructureFactory<T> fesf = new FlatEntryStructureFactory<>();
 
     /**
      * Returns the number of FlatEntryStructures.
@@ -138,9 +137,7 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
         return bf.array();
     }
 
-    /**
-     * Iterator.
-     */
+    @Override
     public Iterator<T> iterator() {
         return flatEntryStructures.iterator();
     }
