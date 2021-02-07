@@ -661,7 +661,7 @@ public class OutlookMessage {
      */
     protected void parseReplyTo(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         // Note: There should be also a responding MAPIProperty.REPLY_RECIPIENT_NAMES entry.
-    	byte[] replyToRecipentBytes = null;
+        byte[] replyToRecipentBytes = null;
         List<Chunk> replyEntriesChunks = mapiMessage.getMainChunks().getAll().get(MAPIProperty.REPLY_RECIPIENT_ENTRIES);
         if(replyEntriesChunks!=null && !replyEntriesChunks.isEmpty()) {
             for(Chunk chunk : replyEntriesChunks) {
@@ -669,13 +669,13 @@ public class OutlookMessage {
                     ByteChunk bc = (ByteChunk)chunk;
                     replyToRecipentBytes = bc.getValue();
                 }
-            }        
+            }
         }
         if(replyToRecipentBytes!=null) {
             FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>(OneOffEntryIDStructure.class, replyToRecipentBytes);
             List<String> replyToRecipents = new ArrayList<String>();
             for(OneOffEntryIDStructure ooes : fels) {
-            	replyToRecipents.add(ooes.getEmailAddress());
+                replyToRecipents.add(ooes.getEmailAddress());
             }
             setReplyTo(replyToRecipents);
         }
