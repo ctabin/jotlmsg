@@ -71,11 +71,6 @@ public class OutlookMessageMSGTest {
         message.addAttachment("message3.txt", "text/html", new ByteArrayInputStream("<html><body>Some html page</body></html>".getBytes(StandardCharsets.UTF_8)));
 
         testMessage(message);
-        
-//        // There was a bug regarding the mimetype, so just generate a new reference file.
-//        File msgFile = new File("src/test/resources/ch/astorm/jotlmsg/generated/with-attachments-2.msg");        
-//        message.writeTo(msgFile);
-        
         testBinary(message, "generated/with-attachments-2.msg");
     }
     
@@ -193,9 +188,6 @@ public class OutlookMessageMSGTest {
         message.setSubject("betreff");
         message.setPlainTextBody("content");
 
-//        // There was a bug regarding the mimetype, so just generate a new reference file.
-//        File msgFile = new File("src/test/resources/ch/astorm/jotlmsg/generated/many-attachments.msg");        
-//        message.writeTo(msgFile);
         
         testBinary(message, "generated/many-attachments.msg");
     }
