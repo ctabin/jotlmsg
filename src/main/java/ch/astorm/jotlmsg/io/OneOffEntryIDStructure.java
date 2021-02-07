@@ -9,7 +9,6 @@ import org.apache.poi.util.StringUtil;
  * Represents an [MS-OXCDATA] 2.2.5.1 One-Off EntryID Structure in Java.
  * 
  * @author Guido Stein
- *
  */
 public class OneOffEntryIDStructure extends FlatEntryStructure {
     // Flags indicate a long-term EntryID.
