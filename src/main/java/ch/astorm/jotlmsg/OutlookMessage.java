@@ -37,7 +37,9 @@ package ch.astorm.jotlmsg;
 import ch.astorm.jotlmsg.OutlookMessageAttachment.InputStreamCreator;
 import ch.astorm.jotlmsg.OutlookMessageAttachment.MemoryInputStreamCreator;
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
+import ch.astorm.jotlmsg.io.FlatEntryListStructure;
 import ch.astorm.jotlmsg.io.MessagePropertiesChunk;
+import ch.astorm.jotlmsg.io.OneOffEntryIDStructure;
 import ch.astorm.jotlmsg.io.PropertiesChunk;
 import static ch.astorm.jotlmsg.io.PropertiesChunk.FLAG_READABLE;
 import static ch.astorm.jotlmsg.io.PropertiesChunk.FLAG_WRITEABLE;
@@ -482,6 +484,7 @@ public class OutlookMessage {
         
         List<OutlookMessageRecipient> recipients = getAllRecipients();
         List<OutlookMessageAttachment> attachments = getAttachments();
+        List<String> replyToRecipents = getReplyTo();
         String body = getPlainTextBody();
         String subject = getSubject();
         String from = getFrom();
@@ -515,6 +518,29 @@ public class OutlookMessage {
         if(from!=null) { 
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SENDER_EMAIL_ADDRESS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(from))); 
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SENDER_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(from))); 
+        }
+
+        //creates the reply recipients
+        if(replyToRecipents!=null) {
+            FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>();
+	        String replyToRecipentNames = null;
+	        boolean first = true;
+	        for(String replyToRecipent : replyToRecipents) {
+	            if(first) {
+	                replyToRecipentNames = new String();
+	                first = false;
+	            } else {
+	                replyToRecipentNames += ";";
+	            }
+	            replyToRecipentNames += replyToRecipent; 
+	            fels.addFlatEntryStructure(new OneOffEntryIDStructure(replyToRecipent) );
+	        }
+	
+	        if(replyToRecipentNames!=null && fels.getCount()>0) {
+	            // Note: There must be responding REPLY_RECIPIENT_ENTRIES and REPLY_RECIPIENT_NAMES MAPIProperties.
+	            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.REPLY_RECIPIENT_ENTRIES, FLAG_READABLE | FLAG_WRITEABLE, fels.toBytes())); 
+	            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.REPLY_RECIPIENT_NAMES, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(replyToRecipentNames))); 
+	        } 
         }
         
         topLevelChunk.writeTo(fs.getRoot());
@@ -634,7 +660,25 @@ public class OutlookMessage {
      * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
      */
     protected void parseReplyTo(MAPIMessage mapiMessage) throws ChunkNotFoundException {
-        //TODO
+        // Note: There should be also a responding MAPIProperty.REPLY_RECIPIENT_NAMES entry.
+        byte[] replyToRecipentBytes = null;
+        List<Chunk> replyEntriesChunks = mapiMessage.getMainChunks().getAll().get(MAPIProperty.REPLY_RECIPIENT_ENTRIES);
+        if(replyEntriesChunks!=null && !replyEntriesChunks.isEmpty()) {
+            for(Chunk chunk : replyEntriesChunks) {
+                if(chunk instanceof ByteChunk) {
+                    ByteChunk bc = (ByteChunk)chunk;
+                    replyToRecipentBytes = bc.getValue();
+                }
+            }
+        }
+        if(replyToRecipentBytes!=null) {
+            FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>(OneOffEntryIDStructure.class, replyToRecipentBytes);
+            List<String> replyToRecipents = new ArrayList<String>();
+            for(OneOffEntryIDStructure ooes : fels) {
+                replyToRecipents.add(ooes.getEmailAddress());
+            }
+            setReplyTo(replyToRecipents);
+        }
     }
     
     /**

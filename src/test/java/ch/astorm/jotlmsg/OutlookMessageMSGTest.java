@@ -7,6 +7,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 import org.apache.poi.util.IOUtils;
@@ -22,7 +24,8 @@ public class OutlookMessageMSGTest {
         message.setSubject("This is a message");
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.\nFind some accents: àïâç&@+\"{}$");
         message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
-
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        
         testMessage(message);
     }
     
@@ -128,6 +131,17 @@ public class OutlookMessageMSGTest {
         assertEquals(source.getAttachments().size(), other.getAttachments().size());
         assertEquals(source.getSentDate(), other.getSentDate());
 
+        if(source.getReplyTo()!=null && other.getReplyTo()!=null) {
+            assertEquals(source.getReplyTo().size(), other.getReplyTo().size());
+            List<String> srcReplyToRecipients = source.getReplyTo();
+            List<String> parsedReplyToRecipients = other.getReplyTo();
+            for(int i=0 ; i<srcReplyToRecipients.size() ; ++i) {
+            	String srcReplyToRecipient = srcReplyToRecipients.get(i);
+            	String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
+                assertEquals(srcReplyToRecipient, parsedReplyToRecipient);
+            }
+        }
+        
         List<OutlookMessageRecipient> srcRecipients = source.getAllRecipients();
         List<OutlookMessageRecipient> parsedRecipients = other.getAllRecipients();
         for(int i=0 ; i<srcRecipients.size() ; ++i) {
@@ -145,7 +159,6 @@ public class OutlookMessageMSGTest {
             OutlookMessageAttachment parsedAttachment = parsedAttachments.get(i);
             assertEquals(srcAttachment.getName(), parsedAttachment.getName());
             assertEquals(srcAttachment.getMimeType(), parsedAttachment.getMimeType());
-            
             byte[] srcData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
             byte[] parData = IOUtils.toByteArray(parsedAttachment.getNewInputStream());
             assertEquals(srcData.length, parData.length);
@@ -154,7 +167,7 @@ public class OutlookMessageMSGTest {
     }
     
     @Test
-    public void addManyRecipients() throws Exception {
+    public void testaddManyRecipients() throws Exception {
         OutlookMessage message = new OutlookMessage();
         IntStream.range(0,40).forEach(i -> message.addRecipient(Type.TO, "user" + i + "@xyz.com"));
 
@@ -165,7 +178,7 @@ public class OutlookMessageMSGTest {
     }
     
     @Test
-    public void addManyAttachments() throws Exception {
+    public void testaddManyAttachments() throws Exception {
         int count = 40;
 
         OutlookMessage message = new OutlookMessage();
@@ -175,6 +188,21 @@ public class OutlookMessageMSGTest {
         message.setSubject("betreff");
         message.setPlainTextBody("content");
 
+        
         testBinary(message, "generated/many-attachments.msg");
+    }
+    
+    @Test
+    public void testManyReplyTos() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message with replyto addresses.\n\n.Bye.");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        List<String> replytos = new ArrayList<String>();
+        IntStream.range(0,40).forEach(i -> replytos.add("reply"+i+"@jotlmsg.com"));
+        message.setReplyTo(replytos);
+        
+        testMessage(message);
     }
 }

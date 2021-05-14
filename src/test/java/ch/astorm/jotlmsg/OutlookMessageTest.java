@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 import org.apache.commons.io.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -118,6 +119,24 @@ public class OutlookMessageTest {
         assertEquals(sdf.parse("28.02.2018"), sentDate);
     }
 
+    @Test
+    public void testParsingReplyTo() throws IOException {
+        InputStream msg = OutlookMessageTest.class.getResourceAsStream("msoutlook/replyto.msg");
+        OutlookMessage message = new OutlookMessage(msg);
+        
+        assertNull(message.getSubject());
+        assertEquals("Mail with two reply to recipients.", message.getPlainTextBody());
+        assertEquals(1, message.getRecipients(Type.TO).size());       
+        assertEquals("to@test.com", message.getRecipients(Type.TO).get(0).getEmail());
+        assertNull(message.getRecipients(Type.TO).get(0).getName());
+        
+        List<String> replyTo = message.getReplyTo();
+        assertNotNull(replyTo);
+        assertEquals(2, replyTo.size());
+        assertEquals("reply1@test.com", replyTo.get(0));
+        assertEquals("reply2@test.com", replyTo.get(1));
+    }    
+    
     @Test
     public void testEmailExtraction() {
         assertNull(OutlookMessage.extractEmail(null));
