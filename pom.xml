@@ -79,14 +79,13 @@
           </execution>
         </executions>
       </plugin>
-      <!-- Compilation with the JDK 1.8 -->
+      <!-- Compilation with the JDK 11 (JDK8 compatible) -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.0</version>
+        <version>3.8.1</version>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <release>8</release>
         </configuration>
       </plugin>
       <!-- Javadoc generation -->
