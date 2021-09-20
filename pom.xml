@@ -164,24 +164,24 @@
     </plugins>
   </build>
   <dependencies>
-    <!-- javax.mail API -->
+    <!-- jakarta.mail API -->
     <dependency>
-      <groupId>javax.mail</groupId>
-      <artifactId>javax.mail-api</artifactId>
-      <version>1.6.2</version>
+      <groupId>jakarta.mail</groupId>
+      <artifactId>jakarta.mail-api</artifactId>
+      <version>2.0.1</version>
     </dependency>
     <!-- com.sun.mail API, only used for MIME message generation -->
     <dependency>
       <groupId>com.sun.mail</groupId>
-      <artifactId>javax.mail</artifactId>
-      <version>1.6.2</version>
+      <artifactId>jakarta.mail</artifactId>
+      <version>2.0.1</version>
       <optional>true</optional>
     </dependency>
-    <!-- Required on Java 9 and higher since javax.activation was removed -->
+    <!-- Required on Java 9 and higher since activation API was removed -->
     <dependency>
-      <groupId>javax.activation</groupId>
-      <artifactId>activation</artifactId>
-      <version>1.1.1</version>
+      <groupId>jakarta.activation</groupId>
+      <artifactId>jakarta.activation-api</artifactId>
+      <version>2.0.1</version>
     </dependency>
     <!-- Apache POI -->
     <dependency>
@@ -205,7 +205,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>5.8.0-M1</version>
+      <version>5.8.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

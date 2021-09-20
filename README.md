@@ -6,7 +6,12 @@
 It's a simple API meant to easily generate Microsoft Outlook message files (.msg). 
 This library is based on [Apache POI](https://poi.apache.org) and is a 100% Java implementation.
 
-It is compatible with the JDK 1.8, but has to be compiled with JDK 11 or later.
+Here the compatibility map of this API:
+
+| Version | JDK                 | Package
+| ------- | ------------------- | ---------
+| <= 1.9  | JDK 8 and upwards   | `javax` 
+| >= 2.0  | JDK 11 and upwards  | `jakarta`
 
 ## Installation
 
@@ -17,7 +22,7 @@ If you're using maven, then simply add the following dependency:
 <dependency>
     <groupId>ch.astorm</groupId>
     <artifactId>jotlmsg</artifactId>
-    <version>1.8</version>
+    <version>2.0</version>
 </dependency>
 ```
 
@@ -26,8 +31,8 @@ need the following dependency:
 ```xml
 <dependency>
     <groupId>com.sun.mail</groupId>
-    <artifactId>javax.mail</artifactId>
-    <version>1.6.2</version>
+    <artifactId>jakarta.mail</artifactId>
+    <version>2.0.1</version>
 </dependency>
 ```
 
