@@ -164,24 +164,17 @@
     </plugins>
   </build>
   <dependencies>
-    <!-- jakarta.mail API -->
-    <dependency>
-      <groupId>jakarta.mail</groupId>
-      <artifactId>jakarta.mail-api</artifactId>
-      <version>2.0.1</version>
-    </dependency>
-    <!-- com.sun.mail API, only used for MIME message generation -->
+    <!-- com.sun.mail API, used for MIME message generation -->
     <dependency>
       <groupId>com.sun.mail</groupId>
       <artifactId>jakarta.mail</artifactId>
       <version>2.0.1</version>
-      <optional>true</optional>
     </dependency>
     <!-- Required on Java 9 and higher since activation API was removed -->
     <dependency>
       <groupId>jakarta.activation</groupId>
       <artifactId>jakarta.activation-api</artifactId>
-      <version>2.0.1</version>
+      <version>2.1.0</version>
     </dependency>
     <!-- Apache POI -->
     <dependency>

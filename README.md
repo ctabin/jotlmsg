@@ -26,16 +26,6 @@ If you're using maven, then simply add the following dependency:
 </dependency>
 ```
 
-If you're intending to use the ```toMimeMessage()``` methods, then you also
-need the following dependency:
-```xml
-<dependency>
-    <groupId>com.sun.mail</groupId>
-    <artifactId>jakarta.mail</artifactId>
-    <version>2.0.1</version>
-</dependency>
-```
-
 ## Usage examples
 
 Create a new message:
