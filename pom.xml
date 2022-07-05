@@ -11,7 +11,7 @@
   <licenses>
     <license>
       <name>BSD-3-Clause</name>
-      <url>https://raw.githubusercontent.com/ctabin/jotlmsg/jotlmsg-${version}/LICENCE</url>
+      <url>https://raw.githubusercontent.com/ctabin/jotlmsg/jotlmsg-${project.version}/LICENCE</url>
     </license>
   </licenses>
   <developers>
