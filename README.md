@@ -1,5 +1,5 @@
 [![Maven](https://img.shields.io/maven-central/v/ch.astorm/jotlmsg.svg)](https://search.maven.org/search?q=g:ch.astorm%20AND%20a:jotlmsg)
-[![Build](https://travis-ci.org/ctabin/jotlmsg.svg?branch=master)](https://app.travis-ci.com/github/ctabin/jotlmsg/branches)
+[![Build](https://app.travis-ci.com/ctabin/jotlmsg.svg?branch=master)](https://app.travis-ci.com/github/ctabin/jotlmsg/branches)
 
 # jotlmsg
 It's a simple API meant to easily generate Microsoft Outlook message files (.msg). 
