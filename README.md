@@ -65,7 +65,7 @@ List<OutlookMessageRecipient> allRecipients = message.getAllRecipients();
 Managing optional replyto recipients:
 ```Java
 OutlookMessage message = new OutlookMessage();
-message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
 
 List<String> replyToRecipients = message.getReplyTo();
 ```
