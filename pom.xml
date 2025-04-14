@@ -118,7 +118,7 @@
         <artifactId>maven-release-plugin</artifactId>
         <version>3.1.1</version>
       </plugin>
-      <!-- Maven central distribution -->
+      <!-- Maven central distribution on https://central.sonatype.com -->
       <plugin>
         <groupId>org.sonatype.central</groupId>
         <artifactId>central-publishing-maven-plugin</artifactId>
@@ -127,7 +127,6 @@
         <configuration>
           <publishingServerId>central</publishingServerId>
           <autoPublish>true</autoPublish>
-          <waitUntil>published</waitUntil>
           <publishingServerId>ossrh</publishingServerId>
         </configuration>
       </plugin>
