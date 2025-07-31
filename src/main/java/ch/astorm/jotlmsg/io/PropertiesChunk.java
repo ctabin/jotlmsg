@@ -118,7 +118,7 @@ public class PropertiesChunk {
     protected void writeNodeData(DirectoryEntry directory, List<PropertyValue> values) throws IOException {
         for(PropertyValue value : values) {
             byte[] bytes = value.getRawValue();
-            String nodeName = PREFIX+getFileName(value.getProperty());
+            String nodeName = PREFIX+getFileName(value);
             directory.createDocument(nodeName, new ByteArrayInputStream(bytes));
         }
     }
@@ -140,11 +140,11 @@ public class PropertiesChunk {
             
             //generic header
             //page 23, point 2.4.2
-            int tag = Integer.parseInt(getFileName(property), 16); //tag is the property id and its type
+            int tag = Integer.parseInt(getFileName(value), 16); //tag is the property id and its type
             LittleEndian.putUInt(tag, out);
             LittleEndian.putUInt(value.getFlags(), out); //readable + writable
 
-            MAPIType type = getTypeMapping(property.usualType);
+            MAPIType type = getTypeMapping(value.getActualType());
             if(type.isFixedLength()) { writeFixedLengthValueHeader(out, property, type, value); } //page 11, point 2.1.2
             else { //page 12, point 2.1.3
                 writeVariableLengthValueHeader(out, property, type, value); 
@@ -182,13 +182,13 @@ public class PropertiesChunk {
         LittleEndian.putUInt(0, out);
     }
     
-    private String getFileName(MAPIProperty property) {
-        String str = Integer.toHexString(property.id).toUpperCase(Locale.ROOT);
+    private String getFileName(PropertyValue propertyValue) {
+        String str = Integer.toHexString(propertyValue.getProperty().id).toUpperCase(Locale.ROOT);
         while(str.length() < 4) {
             str = "0" + str;
         }
         
-        MAPIType type = getTypeMapping(property.usualType);
+        MAPIType type = getTypeMapping(propertyValue.getActualType());
         return str + type.asFileEnding();
     }
     
