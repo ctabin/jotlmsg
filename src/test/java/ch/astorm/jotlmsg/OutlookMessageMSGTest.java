@@ -102,6 +102,30 @@ public class OutlookMessageMSGTest {
         testMessage(message);
     }
 
+    @Test
+    public void testRtfBody() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
+        message.setRtfBody("Sample RTF body");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        testMessage(message);
+    }
+
+    @Test
+    public void testHtmlBody() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
+        message.setHtmlBody("<html><body>Sample body</body></html>");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        testMessage(message);
+    }
+
     private void testBinary(OutlookMessage message, String resPath) throws Exception {
         try(InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath)) {
             OutlookMessage source = new OutlookMessage(is);
@@ -127,6 +151,8 @@ public class OutlookMessageMSGTest {
         assertEquals(source.getSubject(), other.getSubject());
         assertEquals(source.getFrom(), other.getFrom());
         assertEquals(source.getPlainTextBody(), other.getPlainTextBody());
+        assertEquals(source.getRtfBody(), other.getRtfBody());
+        assertEquals(source.getHtmlBody(), other.getHtmlBody());
         assertEquals(source.getAllRecipients().size(), other.getAllRecipients().size());
         assertEquals(source.getAttachments().size(), other.getAttachments().size());
         assertEquals(source.getSentDate(), other.getSentDate());
@@ -136,8 +162,8 @@ public class OutlookMessageMSGTest {
             List<String> srcReplyToRecipients = source.getReplyTo();
             List<String> parsedReplyToRecipients = other.getReplyTo();
             for(int i=0 ; i<srcReplyToRecipients.size() ; ++i) {
-            	String srcReplyToRecipient = srcReplyToRecipients.get(i);
-            	String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
+                String srcReplyToRecipient = srcReplyToRecipients.get(i);
+                String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
                 assertEquals(srcReplyToRecipient, parsedReplyToRecipient);
             }
         }

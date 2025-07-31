@@ -37,6 +37,7 @@ package ch.astorm.jotlmsg;
 import ch.astorm.jotlmsg.OutlookMessageAttachment.InputStreamCreator;
 import ch.astorm.jotlmsg.OutlookMessageAttachment.MemoryInputStreamCreator;
 import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
+import ch.astorm.jotlmsg.io.UncompressedRtfOutputStream;
 import ch.astorm.jotlmsg.io.FlatEntryListStructure;
 import ch.astorm.jotlmsg.io.MessagePropertiesChunk;
 import ch.astorm.jotlmsg.io.OneOffEntryIDStructure;
@@ -54,6 +55,7 @@ import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import jakarta.mail.util.ByteArrayDataSource;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -72,6 +74,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
 import org.apache.poi.hsmf.datatypes.ByteChunk;
@@ -81,9 +84,11 @@ import org.apache.poi.hsmf.datatypes.NameIdChunks;
 import org.apache.poi.hsmf.datatypes.PropertyValue;
 import org.apache.poi.hsmf.datatypes.RecipientChunks;
 import org.apache.poi.hsmf.datatypes.StringChunk;
+import org.apache.poi.hsmf.datatypes.Types;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 import org.apache.poi.poifs.filesystem.DirectoryEntry;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.util.CodePageUtil;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.util.StringUtil;
 
@@ -111,6 +116,9 @@ public class OutlookMessage {
 
     private String subject;
     private String plainTextBody;
+    private String rtfBody;
+    private boolean rtfInSync = false;
+    private String htmlBody;
     private String from;
     private List<String> replyTo;
     private Date sentDate;
@@ -173,6 +181,26 @@ public class OutlookMessage {
      */
     public String getPlainTextBody() { return plainTextBody; }
     public void setPlainTextBody(String plainTextBody) { this.plainTextBody = plainTextBody; }
+
+    /**
+     * Defines the RTF body of the message.
+     * This value may be null.
+     */
+    public String getRtfBody() { return rtfBody; }
+    public void setRtfBody(String rtfBody) { this.rtfBody = rtfBody; }
+
+    /**
+     * Informs Outlook whether the RTF body is in sync with the plain text body.
+     */
+    public boolean getRtfInSync() { return rtfInSync; }
+    public void setRtfInSync(boolean rtfInSync) { this.rtfInSync = rtfInSync; }
+
+    /**
+     * Defines the HTML body of the message.
+     * This value may be null.
+     */
+    public String getHtmlBody() { return htmlBody; }
+    public void setHtmlBody(String htmlBody) { this.htmlBody = htmlBody; }
 
     /**
      * Defines the {@code From} email address from which a message has been sent.
@@ -416,15 +444,41 @@ public class OutlookMessage {
             Address address = recipient.getAddress();
             if(address!=null) { message.addRecipient(recipient.getType().getRecipientType(), address); }
         }
-        
-        MimeMultipart multipart = new MimeMultipart();
-        
+
         String plainText = getPlainTextBody();
-        if(plainText==null) { throw new MessagingException("missing body"); }
-        MimeBodyPart body = new MimeBodyPart();
-        body.setText(getPlainTextBody(), StandardCharsets.UTF_8.name(), "plain");
-        multipart.addBodyPart(body);
-        
+        String html = getHtmlBody();
+
+        if(plainText==null && html==null) { throw new MessagingException("missing body"); }
+
+        final MimeMultipart multipart = new MimeMultipart();
+
+        final List<MimeBodyPart> bodies = new ArrayList<>();
+        if(plainText!=null) {
+            MimeBodyPart plainBody = new MimeBodyPart();
+            plainBody.setText(plainText, StandardCharsets.UTF_8.name(), "plain");
+            bodies.add(plainBody);
+        }
+        if(html!=null) {
+            MimeBodyPart htmlBody = new MimeBodyPart();
+            htmlBody.setText(getHtmlBody(), StandardCharsets.UTF_8.name(), "html");
+            bodies.add(htmlBody);
+        }
+
+        final MimeBodyPart combinedBodiesPart;
+        if (bodies.size() > 1) {
+            final MimeMultipart alternativePart = new MimeMultipart("alternative");
+            for (MimeBodyPart body : bodies) {
+                alternativePart.addBodyPart(body);
+            }
+            combinedBodiesPart = new MimeBodyPart();
+            combinedBodiesPart.setContent(alternativePart);
+        }
+        else {
+            combinedBodiesPart = bodies.get(0);
+        }
+
+        multipart.addBodyPart(combinedBodiesPart);
+
         for(OutlookMessageAttachment attachment : getAttachments()) {
             String name = attachment.getName();
             String mimeType = attachment.getMimeType();
@@ -488,7 +542,9 @@ public class OutlookMessage {
         List<OutlookMessageRecipient> recipients = getAllRecipients();
         List<OutlookMessageAttachment> attachments = getAttachments();
         List<String> replyToRecipents = getReplyTo();
-        String body = getPlainTextBody();
+        String plainTextBody = getPlainTextBody();
+        String rtfBody = getRtfBody();
+        String htmlBody = getHtmlBody();
         String subject = getSubject();
         String from = getFrom();
         
@@ -517,8 +573,20 @@ public class OutlookMessage {
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.TRANSPORT_MESSAGE_HEADERS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("Date: "+mdf.format(sentDate))));
         }
         if(subject!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SUBJECT, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(subject))); }
-        if(body!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(body))); }
-        if(from!=null) { 
+        if(plainTextBody!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(plainTextBody))); }
+        if(rtfBody!=null) {
+            var compressedRtf = new ByteArrayOutputStream();
+            try (UncompressedRtfOutputStream uncompressedRtfOutputStream = new UncompressedRtfOutputStream(compressedRtf)) {
+                IOUtils.copy(new ByteArrayInputStream(rtfBody.getBytes(StandardCharsets.UTF_8)), uncompressedRtfOutputStream);
+            }
+            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.RTF_COMPRESSED, FLAG_READABLE | FLAG_WRITEABLE, compressedRtf.toByteArray(), Types.BINARY));
+            topLevelChunk.setProperty(createBooleanPropertyValue(MAPIProperty.RTF_IN_SYNC, getRtfInSync()));
+        }
+        if(htmlBody!=null) {
+            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY_HTML, FLAG_READABLE | FLAG_WRITEABLE, htmlBody.getBytes(StandardCharsets.UTF_8), Types.BINARY));
+            topLevelChunk.setProperty(createLongPropertyValue(MAPIProperty.INTERNET_CPID, CodePageUtil.CP_UTF8));
+        }
+        if(from!=null) {
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SENDER_EMAIL_ADDRESS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(from))); 
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SENDER_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(from))); 
         }
@@ -662,6 +730,8 @@ public class OutlookMessage {
         silent(() -> parseReplyTo(mapiMessage));
         silent(() -> parseSubject(mapiMessage));
         silent(() -> parseTextBody(mapiMessage));
+        silent(() -> parseRtfBody(mapiMessage));
+        silent(() -> parseHtmlBody(mapiMessage));
         silent(() -> parseRecipients(mapiMessage));
         silent(() -> parseAttachments(mapiMessage));
     }
@@ -733,6 +803,32 @@ public class OutlookMessage {
         this.plainTextBody = mapiMessage.getTextBody();
         if(plainTextBody!=null) { this.plainTextBody = plainTextBody.trim(); }
         if(plainTextBody!=null && plainTextBody.isEmpty()) { this.plainTextBody = null; }
+    }
+
+    /**
+     * Parses the RTF body from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     *
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
+     */
+    protected void parseRtfBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        this.rtfBody = mapiMessage.getRtfBody();
+        if(rtfBody!=null) { this.rtfBody = rtfBody.trim(); }
+        if(rtfBody!=null && rtfBody.isEmpty()) { this.rtfBody = null; }
+    }
+
+    /**
+     * Parses the HTML body from the {@code mapiMessage}.
+     * The parsing will continue, even if a chunk is not found.
+     *
+     * @param mapiMessage The message to parse.
+     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
+     */
+    protected void parseHtmlBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
+        this.htmlBody = mapiMessage.getHtmlBody();
+        if(htmlBody!=null) { this.htmlBody = htmlBody.trim(); }
+        if(htmlBody!=null && htmlBody.isEmpty()) { this.htmlBody = null; }
     }
     
     /**

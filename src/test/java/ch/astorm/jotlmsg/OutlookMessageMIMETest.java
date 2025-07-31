@@ -1,10 +1,12 @@
 
 package ch.astorm.jotlmsg;
 
+import jakarta.mail.BodyPart;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -14,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.apache.commons.io.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -168,6 +171,26 @@ public class OutlookMessageMIMETest {
         assertTrue(cis.closed);
 
         message.toMimeMessage();
+    }
+
+    @Test
+    public void plainAndHtmlMail_shouldUseMultiPartAlternative() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
+        message.setHtmlBody("<html><body>Simple body</body></html>");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        final MimeMessage mimeMessage = message.toMimeMessage();
+        assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
+        final Object content = mimeMessage.getContent();
+        assertInstanceOf(MimeMultipart.class, content);
+        final MimeMultipart mimeMultipart = (MimeMultipart) content;
+        assertEquals(1, mimeMultipart.getCount());
+        final BodyPart firstBodyPart = mimeMultipart.getBodyPart(0);
+        assertTrue(firstBodyPart.getDataHandler().getContentType().startsWith("multipart/alternative"));
     }
 
     private static class CheckableInputStream extends InputStream {
