@@ -440,6 +440,14 @@ public class OutlookMessage {
 
         if(plainText==null && html==null) { throw new MessagingException("missing body"); }
 
+        final List<OutlookMessageAttachment> regularAttachments = getAttachments().stream()
+                .filter(att -> att.getContentId() == null)
+                .toList();
+
+        final List<OutlookMessageAttachment> inlineAttachments = getAttachments().stream()
+                .filter(att -> att.getContentId() != null)
+                .toList();
+
         final MimeMultipart multipart = new MimeMultipart();
 
         final List<MimeBodyPart> bodies = new ArrayList<>();
@@ -462,20 +470,47 @@ public class OutlookMessage {
             }
             combinedBodiesPart = new MimeBodyPart();
             combinedBodiesPart.setContent(alternativePart);
-        }
-        else {
+        } else {
             combinedBodiesPart = bodies.get(0);
         }
 
-        multipart.addBodyPart(combinedBodiesPart);
+        if (inlineAttachments.isEmpty()) {
+            multipart.addBodyPart(combinedBodiesPart);
+        } else {
+            final MimeMultipart relatedPart = new MimeMultipart("related");
+            relatedPart.addBodyPart(combinedBodiesPart);
 
-        for(OutlookMessageAttachment attachment : getAttachments()) {
+            for(OutlookMessageAttachment attachment : inlineAttachments) {
+                String name = attachment.getName();
+                String mimeType = attachment.getMimeType();
+                byte[] data = readAttachement(attachment);
+                String contentId = attachment.getContentId();
+
+                MimeBodyPart part = new MimeBodyPart();
+                part.setDataHandler(new DataHandler(new ByteArrayDataSource(data, mimeType)));
+                part.setContentID(contentId);
+                part.setHeader("Content-Disposition", "inline");
+                part.setFileName(name);
+                relatedPart.addBodyPart(part);
+            }
+
+            final MimeBodyPart relatedBodyPart = new MimeBodyPart();
+            relatedBodyPart.setContent(relatedPart);
+            multipart.addBodyPart(relatedBodyPart);
+        }
+
+        for(OutlookMessageAttachment attachment : regularAttachments) {
             String name = attachment.getName();
             String mimeType = attachment.getMimeType();
             byte[] data = readAttachement(attachment);
+            String contentId = attachment.getContentId();
 
             MimeBodyPart part = new MimeBodyPart();
             part.setDataHandler(new DataHandler(new ByteArrayDataSource(data, mimeType)));
+            if (contentId != null) {
+                part.setContentID(contentId);
+                part.setHeader("Content-Disposition", "inline");
+            }
             part.setFileName(name);
             multipart.addBodyPart(part);
         }
@@ -660,6 +695,7 @@ public class OutlookMessage {
 
             String name = attachment.getName();
             String mimeType = attachment.getMimeType();
+            String contentId = attachment.getContentId();
             byte[] data = readAttachement(attachment);
             
             StoragePropertiesChunk attachStorage = new StoragePropertiesChunk();
@@ -669,6 +705,10 @@ public class OutlookMessage {
                 attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_LONG_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
             }
             if(mimeType!=null) { attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_MIME_TAG, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(mimeType))); }
+            if(contentId!=null) {
+                attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_CONTENT_ID, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(contentId), Types.UNICODE_STRING));
+                attachStorage.setProperty(createLongPropertyValue(MAPIProperty.ATTACH_FLAGS, 4));
+            }
             attachStorage.setProperty(createLongPropertyValue(MAPIProperty.ATTACH_NUM, attachmentCounter));
             attachStorage.setProperty(createLongPropertyValue(MAPIProperty.ATTACH_METHOD, 1)); //ATTACH_BY_VALUE
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_DATA, FLAG_READABLE | FLAG_WRITEABLE, data));
@@ -888,13 +928,15 @@ public class OutlookMessage {
             StringChunk fileName = attachmentChunk.getAttachFileName();
             ByteChunk data = attachmentChunk.getAttachData();
             StringChunk mimeType = attachmentChunk.getAttachMimeTag();
+            StringChunk contentId = attachmentChunk.getAttachContentId();
 
             String name = longFileName!=null ? longFileName.getValue() :
                           fileName!=null ?     fileName.getValue() :
                                                attachmentChunk.getPOIFSName();
             InputStream dataIS = data!=null ? new ByteArrayInputStream(data.getValue()) : null;
             String mimeTypeVal = mimeType!=null ? mimeType.getValue() : null;
-            addAttachment(name, mimeTypeVal, dataIS);
+            OutlookMessageAttachment attachment = addAttachment(name, mimeTypeVal, dataIS);
+            attachment.setContentId(contentId!=null ? contentId.getValue() : null);
         }
     }
     

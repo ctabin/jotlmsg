@@ -5,15 +5,19 @@ import jakarta.mail.BodyPart;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
+import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.UUID;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -191,6 +195,74 @@ public class OutlookMessageMIMETest {
         assertEquals(1, mimeMultipart.getCount());
         final BodyPart firstBodyPart = mimeMultipart.getBodyPart(0);
         assertTrue(firstBodyPart.getDataHandler().getContentType().startsWith("multipart/alternative"));
+    }
+
+    @Test
+    public void htmlMailWithInlineAttachments_shouldUseMultiPartRelated() throws Exception {
+        final String contentId = UUID.randomUUID().toString();
+
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setHtmlBody(String.format("<html><body><div>Inline attached smiley: <img src=\"cid:%s\" alt=\"Smiley\"></div></body></html>", contentId));
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        final OutlookMessageAttachment.InputStreamCreator inputStreamCreator = (attachment) -> getClass().getResourceAsStream("Face-smile.png");
+        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", inputStreamCreator);
+        inlineAttachment.setContentId(contentId);
+        message.addAttachment(inlineAttachment);
+
+        final MimeMessage mimeMessage = message.toMimeMessage();
+
+        // Multipart hierarchy should be:
+        // mixed(related(html, picture))
+        assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
+        final Object content = mimeMessage.getContent();
+        assertInstanceOf(MimeMultipart.class, content);
+        final MimeMultipart mixedMultipart = (MimeMultipart) content;
+        assertEquals(1, mixedMultipart.getCount());
+        final BodyPart firstMixedBodyPart = mixedMultipart.getBodyPart(0);
+        assertTrue(firstMixedBodyPart.getDataHandler().getContentType().startsWith("multipart/related"));
+        final Object firstMixedBodyContent = firstMixedBodyPart.getContent();
+        assertInstanceOf(MimeMultipart.class, firstMixedBodyContent);
+        final MimeMultipart relatedMultipart = (MimeMultipart) firstMixedBodyContent;
+        assertEquals(2, relatedMultipart.getCount());
+        final BodyPart firstRelatedBodyPart = relatedMultipart.getBodyPart(0);
+        assertTrue(firstRelatedBodyPart.getDataHandler().getContentType().startsWith("text/html"));
+    }
+
+    @Test
+    public void plainAndHtmlMailWithInlineAttachments_shouldUseMultiPartRelatedAndAlternative() throws Exception {
+        final String contentId = UUID.randomUUID().toString();
+
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
+        message.setHtmlBody(String.format("<html><body><div>Inline attached smiley: <img src=\"cid:%s\" alt=\"Smiley\"></div></body></html>", contentId));
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        final OutlookMessageAttachment.InputStreamCreator inputStreamCreator = (attachment) -> getClass().getResourceAsStream("Face-smile.png");
+        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", inputStreamCreator);
+        inlineAttachment.setContentId(contentId);
+        message.addAttachment(inlineAttachment);
+
+        // Multipart hierarchy should be:
+        // mixed(related(alternative(plain, html), picture))
+        final MimeMessage mimeMessage = message.toMimeMessage();
+        assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
+        final Object content = mimeMessage.getContent();
+        assertInstanceOf(MimeMultipart.class, content);
+        final MimeMultipart mixedMultipart = (MimeMultipart) content;
+        assertEquals(1, mixedMultipart.getCount());
+        final BodyPart firstMixedBodyPart = mixedMultipart.getBodyPart(0);
+        assertTrue(firstMixedBodyPart.getDataHandler().getContentType().startsWith("multipart/related"));
+        final Object firstMixedBodyContent = firstMixedBodyPart.getContent();
+        assertInstanceOf(MimeMultipart.class, firstMixedBodyContent);
+        final MimeMultipart relatedMultipart = (MimeMultipart) firstMixedBodyContent;
+        assertEquals(2, relatedMultipart.getCount());
+        final BodyPart firstRelatedBodyPart = relatedMultipart.getBodyPart(0);
+        assertTrue(firstRelatedBodyPart.getDataHandler().getContentType().startsWith("multipart/alternative"));
     }
 
     private static class CheckableInputStream extends InputStream {
