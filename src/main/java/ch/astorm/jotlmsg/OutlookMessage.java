@@ -503,14 +503,14 @@ public class OutlookMessage {
         topLevelChunk.setNextRecipientId(recipients.size()); //actually indicates the next free id !
 
         //constants values can be found here: https://msdn.microsoft.com/en-us/library/ee219881(v=exchg.80).aspx
-        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.STORE_SUPPORT_MASK, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0x00040000).array())); //all the strings will be in unicode
+        topLevelChunk.setProperty(createLongPropertyValue(MAPIProperty.STORE_SUPPORT_MASK, 0x00040000)); //all the strings will be in unicode
         topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_CLASS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("IPM.Note"))); //outlook message
-        topLevelChunk.setProperty(new PropertyValue(MAPIProperty.HASATTACH, FLAG_READABLE | FLAG_WRITEABLE, attachments.isEmpty() ? new byte[]{0} : new byte[]{1}));
-        if(sentDate==null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(8).array())); } //mfUnsent - https://msdn.microsoft.com/en-us/library/ee160304(v=exchg.80).aspx
+        topLevelChunk.setProperty(createBooleanPropertyValue(MAPIProperty.HASATTACH, !attachments.isEmpty()));
+        if(sentDate==null) { topLevelChunk.setProperty(createLongPropertyValue(MAPIProperty.MESSAGE_FLAGS, 8)); } //mfUnsent - https://msdn.microsoft.com/en-us/library/ee160304(v=exchg.80).aspx
         else {
             SimpleDateFormat mdf = new SimpleDateFormat(MIME_DATE_FORMAT);
-            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.MESSAGE_FLAGS, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(2).array())); //mfUnmodified
-            topLevelChunk.setProperty(new PropertyValue(MAPIProperty.CLIENT_SUBMIT_TIME, FLAG_READABLE | FLAG_WRITEABLE, dateToBytes(sentDate)));
+            topLevelChunk.setProperty(createLongPropertyValue(MAPIProperty.MESSAGE_FLAGS, 2)); //mfUnmodified
+            topLevelChunk.setProperty(createTimePropertyValue(MAPIProperty.CLIENT_SUBMIT_TIME, sentDate));
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.TRANSPORT_MESSAGE_HEADERS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("Date: "+mdf.format(sentDate))));
         }
         if(subject!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SUBJECT, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(subject))); }
@@ -559,10 +559,10 @@ public class OutlookMessage {
                                      3 ;
             
             StoragePropertiesChunk recipStorage = new StoragePropertiesChunk();
-            recipStorage.setProperty(new PropertyValue(MAPIProperty.OBJECT_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(6).array())); //MAPI_MAILUSER
-            recipStorage.setProperty(new PropertyValue(MAPIProperty.DISPLAY_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(0).array())); //DT_MAILUSER
-            recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(rt).array())); 
-            recipStorage.setProperty(new PropertyValue(MAPIProperty.ROWID, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(recipientCounter).array())); 
+            recipStorage.setProperty(createLongPropertyValue(MAPIProperty.OBJECT_TYPE, 6)); //MAPI_MAILUSER
+            recipStorage.setProperty(createLongPropertyValue(MAPIProperty.DISPLAY_TYPE, 0)); //DT_MAILUSER
+            recipStorage.setProperty(createLongPropertyValue(MAPIProperty.RECIPIENT_TYPE, rt));
+            recipStorage.setProperty(createLongPropertyValue(MAPIProperty.ROWID, recipientCounter));
             if(name!=null) { 
                 recipStorage.setProperty(new PropertyValue(MAPIProperty.DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
                 recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
@@ -593,14 +593,14 @@ public class OutlookMessage {
             byte[] data = readAttachement(attachment);
             
             StoragePropertiesChunk attachStorage = new StoragePropertiesChunk();
-            attachStorage.setProperty(new PropertyValue(MAPIProperty.OBJECT_TYPE, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(7).array())); //MAPI_ATTACH
+            attachStorage.setProperty(createLongPropertyValue(MAPIProperty.OBJECT_TYPE, 7)); //MAPI_ATTACH
             if(name!=null) { 
                 attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
                 attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_LONG_FILENAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
             }
             if(mimeType!=null) { attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_MIME_TAG, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(mimeType))); }
-            attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_NUM, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(attachmentCounter).array()));
-            attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_METHOD, FLAG_READABLE | FLAG_WRITEABLE, ByteBuffer.allocate(4).putInt(1).array())); //ATTACH_BY_VALUE
+            attachStorage.setProperty(createLongPropertyValue(MAPIProperty.ATTACH_NUM, attachmentCounter));
+            attachStorage.setProperty(createLongPropertyValue(MAPIProperty.ATTACH_METHOD, 1)); //ATTACH_BY_VALUE
             attachStorage.setProperty(new PropertyValue(MAPIProperty.ATTACH_DATA, FLAG_READABLE | FLAG_WRITEABLE, data));
             
             String rid = ""+Integer.toHexString(attachmentCounter);
@@ -622,12 +622,30 @@ public class OutlookMessage {
         }
     }
 
-    //extracted from org.apache.poi.hsmf.datatypes.TimePropertyValue
-    private final long OFFSET = 1000L * 60L * 60L * 24L * (365L * 369L + 89L);
-    private byte[] dateToBytes(Date date) {
-        return ByteBuffer.allocate(8).putLong((date.getTime()+OFFSET)*10*1000).array();
+    private PropertyValue.BooleanPropertyValue createBooleanPropertyValue(MAPIProperty property, boolean value) {
+        final var propertyValue = new PropertyValue.BooleanPropertyValue(property, FLAG_READABLE | FLAG_WRITEABLE, new byte[2]);
+        propertyValue.setValue(value);
+        return propertyValue;
     }
-    
+
+    private PropertyValue.LongPropertyValue createLongPropertyValue(MAPIProperty property, int value) {
+        final var propertyValue = new PropertyValue.LongPropertyValue(property, FLAG_READABLE | FLAG_WRITEABLE, new byte[4]);
+        propertyValue.setValue(value);
+        return propertyValue;
+    }
+
+    private PropertyValue.TimePropertyValue createTimePropertyValue(MAPIProperty property, Date value) {
+        final Calendar calendar = Calendar.getInstance();
+        calendar.setTime(value);
+        return createTimePropertyValue(property, calendar);
+    }
+
+    private PropertyValue.TimePropertyValue createTimePropertyValue(MAPIProperty property, Calendar value) {
+        final var propertyValue = new PropertyValue.TimePropertyValue(property, FLAG_READABLE | FLAG_WRITEABLE, new byte[8]);
+        propertyValue.setValue(value);
+        return propertyValue;
+    }
+
     private void parseMAPIMessage(MAPIMessage mapiMessage) {
         silent(() -> parseHeaders(mapiMessage));
         silent(() -> parseFrom(mapiMessage));
