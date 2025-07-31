@@ -117,7 +117,7 @@ public class PropertiesChunk {
      */
     protected void writeNodeData(DirectoryEntry directory, List<PropertyValue> values) throws IOException {
         for(PropertyValue value : values) {
-            byte[] bytes = (byte[])value.getValue();
+            byte[] bytes = value.getRawValue();
             String nodeName = PREFIX+getFileName(value.getProperty());
             directory.createDocument(nodeName, new ByteArrayInputStream(bytes));
         }
@@ -157,13 +157,11 @@ public class PropertiesChunk {
     private void writeFixedLengthValueHeader(OutputStream out, MAPIProperty property, MAPIType type, PropertyValue value) throws IOException {
         //fixed type header
         //page 24, point 2.4.2.1.1
-        byte[] bytes = (byte[])value.getValue(); //always return the bytes array
+        byte[] bytes = value.getRawValue(); //always return the bytes array
         int length = bytes!=null ? bytes.length : 0;
         if(bytes!=null) { 
             //because little endian
-            byte[] reversed = new byte[bytes.length];
-            for(int i=0 ; i<bytes.length ; ++i) { reversed[bytes.length-i-1] = bytes[i]; }
-            out.write(reversed);
+            out.write(bytes);
         }
         out.write(new byte[8-length]);
     }
@@ -171,7 +169,7 @@ public class PropertiesChunk {
     private void writeVariableLengthValueHeader(OutputStream out, MAPIProperty property, MAPIType type, PropertyValue value) throws IOException {
         //variable length header
         //page 24, point 2.4.2.2
-        byte[] bytes = (byte[])value.getValue(); //always return the bytes array
+        byte[] bytes = value.getRawValue(); //always return the bytes array
         int length = bytes!=null ? bytes.length : 0;
 
         //alter the length, as specified in page 25
