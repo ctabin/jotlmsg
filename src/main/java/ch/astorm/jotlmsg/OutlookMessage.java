@@ -59,7 +59,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -106,6 +105,10 @@ import org.apache.poi.util.StringUtil;
  * @author Cedric Tabin
  */
 public class OutlookMessage {
+    public static final int RECIPIENT_FLAGS_DISPLAY_NAME_INCLUDED = 0x10;
+    public static final int TRANSMITTABLE_DISPLAY_NAME_SAME_AS_DISPLAY_NAME = 0x40;
+    public static final int RECIPIENT_FLAGS_TYPE_SMTP = 0x3;
+
     private String subject;
     private String plainTextBody;
     private String from;
@@ -559,13 +562,16 @@ public class OutlookMessage {
                                      3 ;
             
             StoragePropertiesChunk recipStorage = new StoragePropertiesChunk();
+            recipStorage.setProperty(createLongPropertyValue(MAPIProperty.RECIPIENT_FLAGS, TRANSMITTABLE_DISPLAY_NAME_SAME_AS_DISPLAY_NAME | RECIPIENT_FLAGS_DISPLAY_NAME_INCLUDED | RECIPIENT_FLAGS_TYPE_SMTP));
             recipStorage.setProperty(createLongPropertyValue(MAPIProperty.OBJECT_TYPE, 6)); //MAPI_MAILUSER
             recipStorage.setProperty(createLongPropertyValue(MAPIProperty.DISPLAY_TYPE, 0)); //DT_MAILUSER
             recipStorage.setProperty(createLongPropertyValue(MAPIProperty.RECIPIENT_TYPE, rt));
+            recipStorage.setProperty(new PropertyValue(MAPIProperty.ADDRTYPE, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("SMTP")));
             recipStorage.setProperty(createLongPropertyValue(MAPIProperty.ROWID, recipientCounter));
             if(name!=null) { 
                 recipStorage.setProperty(new PropertyValue(MAPIProperty.DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
-                recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name))); 
+                recipStorage.setProperty(new PropertyValue(MAPIProperty.TRANSMITABLE_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name)));
+                recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(name)));
             }
             if(email!=null) { 
                 recipStorage.setProperty(new PropertyValue(MAPIProperty.EMAIL_ADDRESS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(email))); 
@@ -574,7 +580,11 @@ public class OutlookMessage {
                     recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_DISPLAY_NAME, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(email))); 
                 }
             }
-           
+
+            final OneOffEntryIDStructure oneOffEntryIDStructure = new OneOffEntryIDStructure(name != null ? name : "", email != null ? email : "");
+            recipStorage.setProperty(new PropertyValue(MAPIProperty.ENTRY_ID, FLAG_READABLE | FLAG_WRITEABLE, oneOffEntryIDStructure.getEntryID()));
+            recipStorage.setProperty(new PropertyValue(MAPIProperty.RECIPIENT_ENTRY_ID, FLAG_READABLE | FLAG_WRITEABLE, oneOffEntryIDStructure.getEntryID(), Types.BINARY));
+
             String rid = ""+Integer.toHexString(recipientCounter);
             while(rid.length()<8) { rid = "0"+rid; }
             DirectoryEntry recip = fs.createDirectory(RecipientChunks.PREFIX+rid); //page 15, point 2.2.1
