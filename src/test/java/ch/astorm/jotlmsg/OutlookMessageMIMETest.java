@@ -14,8 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.apache.commons.io.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
@@ -25,10 +25,9 @@ public class OutlookMessageMIMETest {
     public void testBasicGeneration() throws Exception {
         OutlookMessage message = new OutlookMessage();
         message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
-        
-        try { MimeMessage mimeMessage = message.toMimeMessage(); assertFalse(true); }
-        catch(MessagingException me) { }
-        
+
+        assertThrows(MessagingException.class, () -> message.toMimeMessage());
+
         message.setPlainTextBody("Hello, World!");
         
         MimeMessage mimeMessage1 = message.toMimeMessage();
@@ -129,12 +128,10 @@ public class OutlookMessageMIMETest {
         message.addAttachment("message.txt", "text/plain", a -> null);
 
         File temporaryFile = new File("tmp");
-        try { message.writeTo(temporaryFile); assertTrue(false); }
-        catch(IllegalStateException ise) { }
+        assertThrows(IllegalStateException.class, () -> message.writeTo(temporaryFile));
         temporaryFile.delete();
 
-        try { message.toMimeMessage(); assertTrue(false); }
-        catch(IllegalStateException ise) { }
+        assertThrows(IllegalStateException.class, () -> message.toMimeMessage());
     }
 
     @Test
@@ -152,8 +149,7 @@ public class OutlookMessageMIMETest {
         message.toMimeMessage();
         assertTrue(cis.closed);
 
-        try { message.toMimeMessage(); assertTrue(false); }
-        catch(IllegalStateException ise) { }
+        assertThrows(IllegalStateException.class, () -> message.toMimeMessage());
     }
 
     @Test
