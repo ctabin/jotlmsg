@@ -3,6 +3,6 @@ branches:
     - master
 
 language: java
-jdk: openjdk11
+jdk: openjdk21
 install: true
 script: mvn clean package --settings m2-travis-settings.xml
