@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.IntStream;
 import org.apache.poi.util.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -102,6 +103,46 @@ public class OutlookMessageMSGTest {
         testMessage(message);
     }
 
+    @Test
+    public void testRtfBody() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
+        message.setRtfBody("Sample RTF body");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        testMessage(message);
+    }
+
+    @Test
+    public void testHtmlBody() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
+        message.setHtmlBody("<html><body>Sample body</body></html>");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        testMessage(message);
+    }
+
+    @Test
+    public void testHtmlBodyWithInlineAttachment() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
+        message.setHtmlBody("<html><body>Sample body</body></html>");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("picture.png", "image/png", new ByteArrayInputStream(new byte[0]));
+        inlineAttachment.setContentId("picture.png@" + UUID.randomUUID());
+        message.addAttachment(inlineAttachment);
+
+        testMessage(message);
+    }
+
     private void testBinary(OutlookMessage message, String resPath) throws Exception {
         try(InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath)) {
             OutlookMessage source = new OutlookMessage(is);
@@ -127,6 +168,8 @@ public class OutlookMessageMSGTest {
         assertEquals(source.getSubject(), other.getSubject());
         assertEquals(source.getFrom(), other.getFrom());
         assertEquals(source.getPlainTextBody(), other.getPlainTextBody());
+        assertEquals(source.getRtfBody(), other.getRtfBody());
+        assertEquals(source.getHtmlBody(), other.getHtmlBody());
         assertEquals(source.getAllRecipients().size(), other.getAllRecipients().size());
         assertEquals(source.getAttachments().size(), other.getAttachments().size());
         assertEquals(source.getSentDate(), other.getSentDate());
@@ -136,8 +179,8 @@ public class OutlookMessageMSGTest {
             List<String> srcReplyToRecipients = source.getReplyTo();
             List<String> parsedReplyToRecipients = other.getReplyTo();
             for(int i=0 ; i<srcReplyToRecipients.size() ; ++i) {
-            	String srcReplyToRecipient = srcReplyToRecipients.get(i);
-            	String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
+                String srcReplyToRecipient = srcReplyToRecipients.get(i);
+                String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
                 assertEquals(srcReplyToRecipient, parsedReplyToRecipient);
             }
         }
@@ -159,6 +202,7 @@ public class OutlookMessageMSGTest {
             OutlookMessageAttachment parsedAttachment = parsedAttachments.get(i);
             assertEquals(srcAttachment.getName(), parsedAttachment.getName());
             assertEquals(srcAttachment.getMimeType(), parsedAttachment.getMimeType());
+            assertEquals(srcAttachment.getContentId(), parsedAttachment.getContentId());
             byte[] srcData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
             byte[] parData = IOUtils.toByteArray(parsedAttachment.getNewInputStream());
             assertEquals(srcData.length, parData.length);
