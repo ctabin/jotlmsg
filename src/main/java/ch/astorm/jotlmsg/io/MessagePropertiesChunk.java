@@ -82,5 +82,5 @@ public class MessagePropertiesChunk extends PropertiesChunk {
         out.write(new byte[8]);
         
         return super.writeHeaderData(out);
-   }
+    }
 }

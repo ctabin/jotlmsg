@@ -81,7 +81,6 @@ public class OutlookMessageRecipient {
     private final Type type;
     private String name;
     private String email;
-    private byte[] entryData;
 
     /**
      * Creates a new {@code OutlookMessageRecipient} with the given {@code type} and
@@ -102,15 +101,11 @@ public class OutlookMessageRecipient {
      * @param name The name or null.
      */
     public OutlookMessageRecipient(Type type, String email, String name) {
-        this(type, email, name, null);
-    }
-    public OutlookMessageRecipient(Type type, String email, String name, byte[] entryData) {
         if(type==null) { throw new IllegalArgumentException("type not defined"); }
         
         this.type = type;
         this.email = email;
         this.name = name;
-        this.entryData = entryData;
     }
     
     /**
@@ -133,9 +128,6 @@ public class OutlookMessageRecipient {
      */
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
-    public byte[] getEntryData() { return entryData; }
-    public void setEntryData(final byte[] entryData) { this.entryData = entryData; }
 
     /**
      * Returns a new {@code Address} from the email of this recipient. If the email

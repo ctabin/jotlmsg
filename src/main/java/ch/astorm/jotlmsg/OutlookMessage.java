@@ -74,7 +74,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
 import org.apache.poi.hsmf.datatypes.ByteChunk;
@@ -82,6 +81,9 @@ import org.apache.poi.hsmf.datatypes.Chunk;
 import org.apache.poi.hsmf.datatypes.MAPIProperty;
 import org.apache.poi.hsmf.datatypes.NameIdChunks;
 import org.apache.poi.hsmf.datatypes.PropertyValue;
+import org.apache.poi.hsmf.datatypes.PropertyValue.BooleanPropertyValue;
+import org.apache.poi.hsmf.datatypes.PropertyValue.LongPropertyValue;
+import org.apache.poi.hsmf.datatypes.PropertyValue.TimePropertyValue;
 import org.apache.poi.hsmf.datatypes.RecipientChunks;
 import org.apache.poi.hsmf.datatypes.StringChunk;
 import org.apache.poi.hsmf.datatypes.Types;
@@ -110,9 +112,9 @@ import org.apache.poi.util.StringUtil;
  * @author Cedric Tabin
  */
 public class OutlookMessage {
-    public static final int RECIPIENT_FLAGS_DISPLAY_NAME_INCLUDED = 0x10;
-    public static final int TRANSMITTABLE_DISPLAY_NAME_SAME_AS_DISPLAY_NAME = 0x40;
-    public static final int RECIPIENT_FLAGS_TYPE_SMTP = 0x3;
+    private static final int RECIPIENT_FLAGS_DISPLAY_NAME_INCLUDED = 0x10;
+    private static final int TRANSMITTABLE_DISPLAY_NAME_SAME_AS_DISPLAY_NAME = 0x40;
+    private static final int RECIPIENT_FLAGS_TYPE_SMTP = 0x3;
 
     private String subject;
     private String plainTextBody;
@@ -174,9 +176,7 @@ public class OutlookMessage {
     public void setSubject(String subject) { this.subject = subject; }
 
     /**
-     * Defines the plain text body of the message. Currently, there is no way to define
-     * a formatted message (HTML/RTF) for technical reasons (RTF compression and {@code PidTagBodyHtml}
-     * not supported by Outlook).
+     * Defines the plain text body of the message.
      * This value may be null.
      */
     public String getPlainTextBody() { return plainTextBody; }
@@ -236,7 +236,9 @@ public class OutlookMessage {
      * @param type The recipients type.
      * @return An immutable list with all the recipients of the given type.
      */
-    public List<OutlookMessageRecipient> getRecipients(Type type) { return Collections.unmodifiableList(recipients.getOrDefault(type, new ArrayList<>(0))); }
+    public List<OutlookMessageRecipient> getRecipients(Type type) {
+        return Collections.unmodifiableList(recipients.getOrDefault(type, new ArrayList<>(0)));
+    }
     
     /**
      * Returns all the recipients of this message. If there is no recipient, an empty
@@ -700,25 +702,25 @@ public class OutlookMessage {
         }
     }
 
-    private PropertyValue.BooleanPropertyValue createBooleanPropertyValue(MAPIProperty property, boolean value) {
+    private BooleanPropertyValue createBooleanPropertyValue(MAPIProperty property, boolean value) {
         final var propertyValue = new PropertyValue.BooleanPropertyValue(property, FLAG_READABLE | FLAG_WRITEABLE, new byte[2]);
         propertyValue.setValue(value);
         return propertyValue;
     }
 
-    private PropertyValue.LongPropertyValue createLongPropertyValue(MAPIProperty property, int value) {
+    private LongPropertyValue createLongPropertyValue(MAPIProperty property, int value) {
         final var propertyValue = new PropertyValue.LongPropertyValue(property, FLAG_READABLE | FLAG_WRITEABLE, new byte[4]);
         propertyValue.setValue(value);
         return propertyValue;
     }
 
-    private PropertyValue.TimePropertyValue createTimePropertyValue(MAPIProperty property, Date value) {
+    private TimePropertyValue createTimePropertyValue(MAPIProperty property, Date value) {
         final Calendar calendar = Calendar.getInstance();
         calendar.setTime(value);
         return createTimePropertyValue(property, calendar);
     }
 
-    private PropertyValue.TimePropertyValue createTimePropertyValue(MAPIProperty property, Calendar value) {
+    private TimePropertyValue createTimePropertyValue(MAPIProperty property, Calendar value) {
         final var propertyValue = new PropertyValue.TimePropertyValue(property, FLAG_READABLE | FLAG_WRITEABLE, new byte[8]);
         propertyValue.setValue(value);
         return propertyValue;
@@ -771,7 +773,7 @@ public class OutlookMessage {
         }
         if(replyToRecipentBytes!=null) {
             FlatEntryListStructure<OneOffEntryIDStructure> fels = new FlatEntryListStructure<>(OneOffEntryIDStructure.class, replyToRecipentBytes);
-            List<String> replyToRecipents = new ArrayList<String>();
+            List<String> replyToRecipents = new ArrayList<>();
             for(OneOffEntryIDStructure ooes : fels) {
                 replyToRecipents.add(ooes.getEmailAddress());
             }

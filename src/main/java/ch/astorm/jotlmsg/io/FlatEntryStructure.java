@@ -12,6 +12,26 @@ public class FlatEntryStructure {
     private byte[] entryID;
 
     /**
+     * Default constructor
+     */
+    public FlatEntryStructure() {
+    };
+
+    /**
+     * Constructor for byte parsing.
+     * 
+     * @param bf {@link java.nio.ByteBuffer} source for parsing. 
+     */
+    public FlatEntryStructure(ByteBuffer bf) {
+        // Size is stored in 4 bytes.
+        size = bf.getInt();
+
+        // Copy entry bytes from ByteBuffer.
+        entryID = new byte[Long.valueOf(size).intValue()];
+        bf.get(entryID, 0, Long.valueOf(size).intValue());
+    }
+    
+    /**
      * Returns the number of bytes of following EntryID field.
      * 
      * @return Number of bytes.
@@ -37,25 +57,5 @@ public class FlatEntryStructure {
     public void setEntryID(byte[] entryID) {
         this.entryID = entryID;
         this.size = entryID.length;
-    }
-
-    /**
-     * Default constructor
-     */
-    public FlatEntryStructure() {
-    };
-
-    /**
-     * Constructor for byte parsing.
-     * 
-     * @param bf {@link java.nio.ByteBuffer} source for parsing. 
-     */
-    public FlatEntryStructure(ByteBuffer bf) {
-        // Size is stored in 4 bytes.
-        size = bf.getInt();
-
-        // Copy entry bytes from ByteBuffer.
-        entryID = new byte[Long.valueOf(size).intValue()];
-        bf.get(entryID, 0, Long.valueOf(size).intValue());
     }
 }

@@ -81,7 +81,7 @@ public class PropertiesChunk {
      */
     public static final int FLAG_WRITEABLE = 4;
     
-    private final Map<MAPIProperty, PropertyValue> properties = new HashMap<>();
+    private final Map<MAPIProperty, PropertyValue> properties = new HashMap<>(64);
 
     /**
      * Defines a property. Multi-valued properties are not yet supported.
