@@ -14,8 +14,8 @@ import java.util.List;
 public class FlatEntryListStructure<T extends FlatEntryStructure> implements Iterable<T> {
     private long count; // Number of FlatEntryStructures.
     private long size; // Number of bytes of all FlatEntryStructures.
+    private final FlatEntryStructureFactory<T> fesf = new FlatEntryStructureFactory<>();
     private List<T> flatEntryStructures = new ArrayList<>();
-    private FlatEntryStructureFactory<T> fesf = new FlatEntryStructureFactory<>();
 
     /**
      * Returns the number of FlatEntryStructures.
@@ -72,7 +72,7 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
         }
 
         size = totalSize;
-        count = (long) flatEntryStructures.size();
+        count = (long)flatEntryStructures.size();
     }
 
     /**
@@ -123,11 +123,11 @@ public class FlatEntryListStructure<T extends FlatEntryStructure> implements Ite
         ByteBuffer bf = ByteBuffer.allocate((int) totalSize).order(ByteOrder.LITTLE_ENDIAN);
 
         // Store count and size in 4 bytes.
-        bf.putInt((int) flatEntryStructures.size()); // Number of FlatEntryStructures.
-        bf.putInt((int) totalSize - 8); // Number of bytes of all FlatEntryStructures.
+        bf.putInt((int)flatEntryStructures.size()); // Number of FlatEntryStructures.
+        bf.putInt((int)totalSize - 8); // Number of bytes of all FlatEntryStructures.
 
         for (FlatEntryStructure fes : flatEntryStructures) {
-            bf.putInt((int) fes.getSize());
+            bf.putInt((int)fes.getSize());
             bf.put(fes.getEntryID());
 
             // Consider 4 byte alignment
