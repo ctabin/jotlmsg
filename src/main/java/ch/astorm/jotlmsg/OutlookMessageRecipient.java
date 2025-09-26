@@ -128,7 +128,7 @@ public class OutlookMessageRecipient {
      */
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-    
+
     /**
      * Returns a new {@code Address} from the email of this recipient. If the email
      * is not defined, this method returns null.
