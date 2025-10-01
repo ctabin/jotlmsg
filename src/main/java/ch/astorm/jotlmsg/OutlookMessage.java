@@ -119,8 +119,6 @@ public class OutlookMessage {
     
     private String subject;
     private String plainTextBody;
-    private String rtfBody;
-    private boolean rtfInSync;
     private String htmlBody;
     private String from;
     private List<String> replyTo;
@@ -182,19 +180,6 @@ public class OutlookMessage {
      */
     public String getPlainTextBody() { return plainTextBody; }
     public void setPlainTextBody(String plainTextBody) { this.plainTextBody = plainTextBody; }
-
-    /**
-     * Defines the RTF body of the message.
-     * This value may be null.
-     */
-    public String getRtfBody() { return rtfBody; }
-    public void setRtfBody(String rtfBody) { this.rtfBody = rtfBody; }
-
-    /**
-     * Informs Outlook whether the RTF body is in sync with the plain text body.
-     */
-    public boolean getRtfInSync() { return rtfInSync; }
-    public void setRtfInSync(boolean rtfInSync) { this.rtfInSync = rtfInSync; }
 
     /**
      * Defines the HTML body of the message.
@@ -546,15 +531,12 @@ public class OutlookMessage {
         List<OutlookMessageAttachment> attachments = getAttachments();
         List<String> replyToRecipents = getReplyTo();
         String plainTextBody = getPlainTextBody();
-        String rtfBody = getRtfBody();
         String htmlBody = getHtmlBody();
         String subject = getSubject();
         String from = getFrom();
         
         //an RTF body is necessary to show an HTML body in Outlook
-        if(htmlBody!=null && rtfBody==null) {
-            rtfBody = RTF_PLACEHOLDER;
-        }
+        String rtfBody = htmlBody!=null ? RTF_PLACEHOLDER : null;
         
         //creates the basic structure (page 17, point 2.2.3)
         DirectoryEntry nameid = fs.createDirectory(NameIdChunks.NAME);
@@ -588,7 +570,7 @@ public class OutlookMessage {
                 IOUtils.copy(new ByteArrayInputStream(rtfBody.getBytes(StandardCharsets.UTF_8)), uncompressedRtfOutputStream);
             }
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.RTF_COMPRESSED, FLAG_READABLE | FLAG_WRITEABLE, compressedRtf.toByteArray(), Types.BINARY));
-            topLevelChunk.setProperty(createBooleanPropertyValue(MAPIProperty.RTF_IN_SYNC, getRtfInSync()));
+            topLevelChunk.setProperty(createBooleanPropertyValue(MAPIProperty.RTF_IN_SYNC, false));
         }
         if(htmlBody!=null) {
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY_HTML, FLAG_READABLE | FLAG_WRITEABLE, htmlBody.getBytes(StandardCharsets.UTF_8), Types.BINARY));
@@ -738,7 +720,6 @@ public class OutlookMessage {
         silent(() -> parseReplyTo(mapiMessage));
         silent(() -> parseSubject(mapiMessage));
         silent(() -> parseTextBody(mapiMessage));
-        silent(() -> parseRtfBody(mapiMessage));
         silent(() -> parseHtmlBody(mapiMessage));
         silent(() -> parseRecipients(mapiMessage));
         silent(() -> parseAttachments(mapiMessage));
@@ -811,19 +792,6 @@ public class OutlookMessage {
         this.plainTextBody = mapiMessage.getTextBody();
         if(plainTextBody!=null) { this.plainTextBody = plainTextBody.trim(); }
         if(plainTextBody!=null && plainTextBody.isEmpty()) { this.plainTextBody = null; }
-    }
-
-    /**
-     * Parses the RTF body from the {@code mapiMessage}.
-     * The parsing will continue, even if a chunk is not found.
-     *
-     * @param mapiMessage The message to parse.
-     * @throws ChunkNotFoundException If some data is not found in the {@code mapiMessage}.
-     */
-    protected void parseRtfBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
-        this.rtfBody = mapiMessage.getRtfBody();
-        if(rtfBody!=null) { this.rtfBody = rtfBody.trim(); }
-        if(rtfBody!=null && (rtfBody.isEmpty() || rtfBody.equals(RTF_PLACEHOLDER))) { this.rtfBody = null; }
     }
 
     /**
