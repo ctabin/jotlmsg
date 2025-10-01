@@ -104,10 +104,20 @@ public class OutlookMessageMSGTest {
 
     @Test
     public void testHtmlBody() throws Exception {
+        String htmlText = """
+                          <html>
+                            <body>
+                                <h1>Title</h1>
+                                <p>This is some <strong>bold</strong> and <i>italic</i> text.</p>
+                                <p>Here is some <span style=\"color:red\">red</span> text too.</p>
+                            </body>
+                          </html>
+                          """;
+        
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setHtmlBody("<html><body><h1>Title</h1><p>This is some <strong>bold</strong> and <i>italic</i> text.</p><p>Here is some <span style=\"color:red\">red</span> text too.</p></body></html>");
+        message.setHtmlBody(htmlText.trim());
         message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
 
         testMessage(message);

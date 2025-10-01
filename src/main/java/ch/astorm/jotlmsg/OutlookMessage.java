@@ -175,15 +175,17 @@ public class OutlookMessage {
     public void setSubject(String subject) { this.subject = subject; }
 
     /**
-     * Defines the plain text body of the message.
-     * This value may be null.
+     * Defines the plain text body of the message. This value may be null.
+     * <p>If both a plain text and an html body are set, then the html body will be
+     * displayed by Outlook.</p>
      */
     public String getPlainTextBody() { return plainTextBody; }
     public void setPlainTextBody(String plainTextBody) { this.plainTextBody = plainTextBody; }
 
     /**
-     * Defines the HTML body of the message.
-     * This value may be null.
+     * Defines the HTML body of the message. This value may be null.
+     * <p>If both a plain text and an html body are set, then the html body will be
+     * displayed by Outlook.</p>
      */
     public String getHtmlBody() { return htmlBody; }
     public void setHtmlBody(String htmlBody) { this.htmlBody = htmlBody; }
@@ -565,7 +567,7 @@ public class OutlookMessage {
         if(subject!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.SUBJECT, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(subject))); }
         if(plainTextBody!=null) { topLevelChunk.setProperty(new PropertyValue(MAPIProperty.BODY, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE(plainTextBody))); }
         if(rtfBody!=null) {
-            var compressedRtf = new ByteArrayOutputStream();
+            ByteArrayOutputStream compressedRtf = new ByteArrayOutputStream();
             try (UncompressedRtfOutputStream uncompressedRtfOutputStream = new UncompressedRtfOutputStream(compressedRtf)) {
                 IOUtils.copy(new ByteArrayInputStream(rtfBody.getBytes(StandardCharsets.UTF_8)), uncompressedRtfOutputStream);
             }

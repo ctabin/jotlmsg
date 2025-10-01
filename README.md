@@ -16,7 +16,7 @@ Here the compatibility map of this API:
 
 ## Installation
 
-Simply add the ```jotlmsg.jar``` and its dependencies to your classpath.
+Simply add the `jotlmsg.jar` and its dependencies to your classpath.
 
 If you're using maven, then simply add the following dependency:
 ```xml
@@ -33,7 +33,10 @@ Create a new message:
 ```Java
 OutlookMessage message = new OutlookMessage();
 message.setSubject("Hello");
+
+//plain text or html text
 message.setPlainTextBody("This is a message draft.");
+message.setHtmlBody("<html><body><p>This is some <strong>bold</strong> and <i>italic</i> text.</body></html>");
 
 //creates a new Outlook Message file
 message.writeTo(new File("myMessage.msg"));
@@ -85,8 +88,6 @@ List<OutlookMessageAttachment> attachments = message.getAttachments();
 
 The current implementation allows to create simple msg files with many recipients (up to 2048) and attachments (up to 2048). 
 However, there is not current support of Microsoft Outlook advanced features like appointments or calendar integration, nor embedded messages.
-
-Unfortunately, only plain text messages are supported. It is not possible to inject HTML for now.
 
 ## Donate
 
