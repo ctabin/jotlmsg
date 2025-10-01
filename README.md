@@ -34,9 +34,9 @@ Create a new message:
 OutlookMessage message = new OutlookMessage();
 message.setSubject("Hello");
 
-//plain text or html text
-message.setPlainTextBody("This is a message draft.");
-message.setHtmlBody("<html><body><p>This is some <strong>bold</strong> and <i>italic</i> text.</body></html>");
+//plain text body or html body
+message.setPlainTextBody("This is a plain text body.");
+message.setHtmlBody("<html><body><p>This is an html body with <strong>bold</strong> and <i>italic</i> styles.</p></body></html>");
 
 //creates a new Outlook Message file
 message.writeTo(new File("myMessage.msg"));
