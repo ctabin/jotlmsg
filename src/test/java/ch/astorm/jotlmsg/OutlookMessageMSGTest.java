@@ -119,8 +119,7 @@ public class OutlookMessageMSGTest {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
-        message.setHtmlBody("<html><body>Sample body</body></html>");
+        message.setHtmlBody("<html><body><h1>Title</h1><p>This is some <strong>bold</strong> and <i>italic</i> text.</p><p>Here is some <span style=\"color:red\">red</span> text too.</p></body></html>");
         message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
 
         testMessage(message);

@@ -115,11 +115,12 @@ public class OutlookMessage {
     private static final int RECIPIENT_FLAGS_DISPLAY_NAME_INCLUDED = 0x10;
     private static final int TRANSMITTABLE_DISPLAY_NAME_SAME_AS_DISPLAY_NAME = 0x40;
     private static final int RECIPIENT_FLAGS_TYPE_SMTP = 0x3;
-
+    private static final String RTF_PLACEHOLDER = "#empty";
+    
     private String subject;
     private String plainTextBody;
     private String rtfBody;
-    private boolean rtfInSync = false;
+    private boolean rtfInSync;
     private String htmlBody;
     private String from;
     private List<String> replyTo;
@@ -550,6 +551,11 @@ public class OutlookMessage {
         String subject = getSubject();
         String from = getFrom();
         
+        //an RTF body is necessary to show an HTML body in Outlook
+        if(htmlBody!=null && rtfBody==null) {
+            rtfBody = RTF_PLACEHOLDER;
+        }
+        
         //creates the basic structure (page 17, point 2.2.3)
         DirectoryEntry nameid = fs.createDirectory(NameIdChunks.NAME);
         nameid.createDocument(PropertiesChunk.PREFIX+"00020102", new ByteArrayInputStream(new byte[0])); //GUID Stream
@@ -817,7 +823,7 @@ public class OutlookMessage {
     protected void parseRtfBody(MAPIMessage mapiMessage) throws ChunkNotFoundException {
         this.rtfBody = mapiMessage.getRtfBody();
         if(rtfBody!=null) { this.rtfBody = rtfBody.trim(); }
-        if(rtfBody!=null && rtfBody.isEmpty()) { this.rtfBody = null; }
+        if(rtfBody!=null && (rtfBody.isEmpty() || rtfBody.equals(RTF_PLACEHOLDER))) { this.rtfBody = null; }
     }
 
     /**
