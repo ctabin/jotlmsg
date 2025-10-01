@@ -102,6 +102,27 @@ public class OutlookMessageMSGTest {
         testMessage(message);
     }
 
+    @Test
+    public void testHtmlBody() throws Exception {
+        String htmlText = """
+                          <html>
+                            <body>
+                                <h1>Title</h1>
+                                <p>This is some <strong>bold</strong> and <i>italic</i> text.</p>
+                                <p>Here is some <span style=\"color:red\">red</span> text too.</p>
+                            </body>
+                          </html>
+                          """;
+        
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setHtmlBody(htmlText.trim());
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        testMessage(message);
+    }
+
     private void testBinary(OutlookMessage message, String resPath) throws Exception {
         try(InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath)) {
             OutlookMessage source = new OutlookMessage(is);
@@ -127,6 +148,7 @@ public class OutlookMessageMSGTest {
         assertEquals(source.getSubject(), other.getSubject());
         assertEquals(source.getFrom(), other.getFrom());
         assertEquals(source.getPlainTextBody(), other.getPlainTextBody());
+        assertEquals(source.getHtmlBody(), other.getHtmlBody());
         assertEquals(source.getAllRecipients().size(), other.getAllRecipients().size());
         assertEquals(source.getAttachments().size(), other.getAttachments().size());
         assertEquals(source.getSentDate(), other.getSentDate());
@@ -136,8 +158,8 @@ public class OutlookMessageMSGTest {
             List<String> srcReplyToRecipients = source.getReplyTo();
             List<String> parsedReplyToRecipients = other.getReplyTo();
             for(int i=0 ; i<srcReplyToRecipients.size() ; ++i) {
-            	String srcReplyToRecipient = srcReplyToRecipients.get(i);
-            	String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
+                String srcReplyToRecipient = srcReplyToRecipients.get(i);
+                String parsedReplyToRecipient = parsedReplyToRecipients.get(i);
                 assertEquals(srcReplyToRecipient, parsedReplyToRecipient);
             }
         }
