@@ -193,6 +193,29 @@ public class OutlookMessageMIMETest {
         assertTrue(firstBodyPart.getDataHandler().getContentType().startsWith("multipart/alternative"));
     }
 
+    @Test
+    public void plainAndHtmlMailWithInlineAttachments_shouldUseMultiPartRelated() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
+        message.setHtmlBody("<html><body>Simple body</body></html>");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("picture.png", "image/png", new ByteArrayInputStream(new byte[0]));
+        inlineAttachment.setContentId("picture.png");
+        message.addAttachment(inlineAttachment);
+
+        final MimeMessage mimeMessage = message.toMimeMessage();
+        assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
+        final Object content = mimeMessage.getContent();
+        assertInstanceOf(MimeMultipart.class, content);
+        final MimeMultipart mimeMultipart = (MimeMultipart) content;
+        assertEquals(1, mimeMultipart.getCount());
+        final BodyPart firstBodyPart = mimeMultipart.getBodyPart(0);
+        assertTrue(firstBodyPart.getDataHandler().getContentType().startsWith("multipart/related"));
+    }
+
     private static class CheckableInputStream extends InputStream {
         private boolean closed = false;
 
