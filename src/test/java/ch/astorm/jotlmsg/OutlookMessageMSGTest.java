@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.IntStream;
 import org.apache.poi.util.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -123,6 +124,22 @@ public class OutlookMessageMSGTest {
         testMessage(message);
     }
 
+    @Test
+    public void testHtmlBodyWithInlineAttachment() throws Exception {
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setPlainTextBody("Hello,\n\nThis is a simple message that has been sent.\n\n.Bye.");
+        message.setHtmlBody("<html><body>Sample body</body></html>");
+        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("picture.png", "image/png", new ByteArrayInputStream(new byte[0]));
+        inlineAttachment.setContentId("picture.png@" + UUID.randomUUID());
+        message.addAttachment(inlineAttachment);
+
+        testMessage(message);
+    }
+
     private void testBinary(OutlookMessage message, String resPath) throws Exception {
         try(InputStream is = OutlookMessageMSGTest.class.getResourceAsStream(resPath)) {
             OutlookMessage source = new OutlookMessage(is);
@@ -181,6 +198,7 @@ public class OutlookMessageMSGTest {
             OutlookMessageAttachment parsedAttachment = parsedAttachments.get(i);
             assertEquals(srcAttachment.getName(), parsedAttachment.getName());
             assertEquals(srcAttachment.getMimeType(), parsedAttachment.getMimeType());
+            assertEquals(srcAttachment.getContentId(), parsedAttachment.getContentId());
             byte[] srcData = IOUtils.toByteArray(srcAttachment.getNewInputStream());
             byte[] parData = IOUtils.toByteArray(parsedAttachment.getNewInputStream());
             assertEquals(srcData.length, parData.length);

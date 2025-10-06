@@ -48,6 +48,7 @@ public class OutlookMessageAttachment {
     private final String name;
     private String mimeType;
     private InputStreamCreator inputStreamCreator;
+    private String contentId;
     
     /**
      * Represents an {@code InputStream} creator.
@@ -148,6 +149,13 @@ public class OutlookMessageAttachment {
      */
     public String getMimeType() { return mimeType; }
     public void setMimeType(String mimeType) { this.mimeType = mimeType; }
+
+    /**
+     * Defines the Content-Id, by which this attachment is referenceable in an HTML body.
+     * Setting this to anything other than {@code null} will make this an inline attachment.
+     */
+    public String getContentId() { return contentId; }
+    public void setContentId(String contentId) { this.contentId = contentId; }
     
     /**
      * Defines the {@code InputStreamCreator} that handles the attachment content.
