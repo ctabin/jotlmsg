@@ -200,7 +200,7 @@ public class OutlookMessageMIMETest {
 
     @Test
     public void htmlMailWithInlineAttachments_shouldUseMultiPartRelated() throws Exception {
-        final String contentId = UUID.randomUUID().toString();
+        String contentId = UUID.randomUUID().toString();
 
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
@@ -209,11 +209,11 @@ public class OutlookMessageMIMETest {
         message.setHtmlBody(String.format("<html><body><div>Inline attached smiley: <img src=\"cid:%s\" alt=\"Smiley\"></div></body></html>", contentId));
         message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
         
-        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", a -> OutlookMessageMIMETest.class.getResourceAsStream("Face-smile.png"));
+        OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", a -> OutlookMessageMIMETest.class.getResourceAsStream("Face-smile.png"));
         inlineAttachment.setContentId(contentId);
         message.addAttachment(inlineAttachment);
 
-        final MimeMessage mimeMessage = message.toMimeMessage();
+        MimeMessage mimeMessage = message.toMimeMessage();
 
         // Multipart hierarchy should be:
         // mixed(related(html, picture))
@@ -243,7 +243,7 @@ public class OutlookMessageMIMETest {
 
     @Test
     public void plainAndHtmlMailWithInlineAttachments_shouldUseMultiPartRelatedWithAlternative() throws Exception {
-        final String contentId = UUID.randomUUID().toString();
+        String contentId = UUID.randomUUID().toString();
 
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
@@ -287,7 +287,7 @@ public class OutlookMessageMIMETest {
     
     @Test
     public void plainAndHtmlMailWithInlineAttachments_shouldUseMultiPartRelatedWithoutAlternative() throws Exception {
-        final String contentId = UUID.randomUUID().toString();
+        String contentId = UUID.randomUUID().toString();
 
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
