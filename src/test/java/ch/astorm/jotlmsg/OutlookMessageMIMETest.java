@@ -1,23 +1,21 @@
 
 package ch.astorm.jotlmsg;
 
+import ch.astorm.jotlmsg.OutlookMessageRecipient.Type;
 import jakarta.mail.BodyPart;
 import jakarta.mail.Message;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
-import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -31,7 +29,7 @@ public class OutlookMessageMIMETest {
     @Test
     public void testBasicGeneration() throws Exception {
         OutlookMessage message = new OutlookMessage();
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
 
         assertThrows(MessagingException.class, () -> message.toMimeMessage());
 
@@ -63,11 +61,11 @@ public class OutlookMessageMIMETest {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "ctabin@jotlmsg.com");
-        message.addRecipient(OutlookMessageRecipient.Type.CC, "cc@jotlmsg.com", "Copy");
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addRecipient(Type.TO, "ctabin@jotlmsg.com");
+        message.addRecipient(Type.CC, "cc@jotlmsg.com", "Copy");
         message.addAttachment("message.txt", "text/plain", new ByteArrayInputStream("Hello, World!".getBytes(StandardCharsets.UTF_8)));
         
         // -----------------------------------------------------
@@ -129,9 +127,9 @@ public class OutlookMessageMIMETest {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
         message.addAttachment("message.txt", "text/plain", a -> null);
 
         File temporaryFile = new File("tmp");
@@ -146,9 +144,9 @@ public class OutlookMessageMIMETest {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
 
         CheckableInputStream cis = new CheckableInputStream();
         message.addAttachment("message.txt", "text/plain", a -> cis);
@@ -164,9 +162,9 @@ public class OutlookMessageMIMETest {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
 
         CheckableInputStream cis = new CheckableInputStream();
         message.addAttachment("message.txt", "text/plain", cis);
@@ -182,18 +180,21 @@ public class OutlookMessageMIMETest {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
         message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
         message.setHtmlBody("<html><body>Simple body</body></html>");
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
 
-        final MimeMessage mimeMessage = message.toMimeMessage();
+        MimeMessage mimeMessage = message.toMimeMessage();
         assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
-        final Object content = mimeMessage.getContent();
+        
+        Object content = mimeMessage.getContent();
         assertInstanceOf(MimeMultipart.class, content);
-        final MimeMultipart mimeMultipart = (MimeMultipart) content;
+        
+        MimeMultipart mimeMultipart = (MimeMultipart)content;
         assertEquals(1, mimeMultipart.getCount());
-        final BodyPart firstBodyPart = mimeMultipart.getBodyPart(0);
+        
+        BodyPart firstBodyPart = mimeMultipart.getBodyPart(0);
         assertTrue(firstBodyPart.getDataHandler().getContentType().startsWith("multipart/alternative"));
     }
 
@@ -204,11 +205,11 @@ public class OutlookMessageMIMETest {
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
         message.setHtmlBody(String.format("<html><body><div>Inline attached smiley: <img src=\"cid:%s\" alt=\"Smiley\"></div></body></html>", contentId));
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
-        final OutlookMessageAttachment.InputStreamCreator inputStreamCreator = (attachment) -> getClass().getResourceAsStream("Face-smile.png");
-        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", inputStreamCreator);
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
+        
+        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", a -> OutlookMessageMIMETest.class.getResourceAsStream("Face-smile.png"));
         inlineAttachment.setContentId(contentId);
         message.addAttachment(inlineAttachment);
 
@@ -217,52 +218,114 @@ public class OutlookMessageMIMETest {
         // Multipart hierarchy should be:
         // mixed(related(html, picture))
         assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
-        final Object content = mimeMessage.getContent();
+        
+        Object content = mimeMessage.getContent();
         assertInstanceOf(MimeMultipart.class, content);
-        final MimeMultipart mixedMultipart = (MimeMultipart) content;
+        
+        MimeMultipart mixedMultipart = (MimeMultipart) content;
         assertEquals(1, mixedMultipart.getCount());
-        final BodyPart firstMixedBodyPart = mixedMultipart.getBodyPart(0);
+        
+        BodyPart firstMixedBodyPart = mixedMultipart.getBodyPart(0);
         assertTrue(firstMixedBodyPart.getDataHandler().getContentType().startsWith("multipart/related"));
-        final Object firstMixedBodyContent = firstMixedBodyPart.getContent();
+        
+        Object firstMixedBodyContent = firstMixedBodyPart.getContent();
         assertInstanceOf(MimeMultipart.class, firstMixedBodyContent);
-        final MimeMultipart relatedMultipart = (MimeMultipart) firstMixedBodyContent;
+        
+        MimeMultipart relatedMultipart = (MimeMultipart) firstMixedBodyContent;
         assertEquals(2, relatedMultipart.getCount());
-        final BodyPart firstRelatedBodyPart = relatedMultipart.getBodyPart(0);
+        
+        BodyPart firstRelatedBodyPart = relatedMultipart.getBodyPart(0);
         assertTrue(firstRelatedBodyPart.getDataHandler().getContentType().startsWith("text/html"));
+        
+        BodyPart secondRelatedBodyPart = relatedMultipart.getBodyPart(1);
+        assertTrue(secondRelatedBodyPart.getDataHandler().getContentType().startsWith("image/png"));
     }
 
     @Test
-    public void plainAndHtmlMailWithInlineAttachments_shouldUseMultiPartRelatedAndAlternative() throws Exception {
+    public void plainAndHtmlMailWithInlineAttachments_shouldUseMultiPartRelatedWithAlternative() throws Exception {
         final String contentId = UUID.randomUUID().toString();
 
         OutlookMessage message = new OutlookMessage();
         message.setSubject("This is a message");
         message.setFrom("sender@jotlmsg.com");
-        message.setReplyTo(Arrays.asList("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
-        message.setPlainTextBody("Hello,\n\nThis is a simple message.\n\n.Bye.");
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setPlainTextBody("Some plain text");
         message.setHtmlBody(String.format("<html><body><div>Inline attached smiley: <img src=\"cid:%s\" alt=\"Smiley\"></div></body></html>", contentId));
-        message.addRecipient(OutlookMessageRecipient.Type.TO, "cedric@jotlmsg.com", "Cédric");
-        final OutlookMessageAttachment.InputStreamCreator inputStreamCreator = (attachment) -> getClass().getResourceAsStream("Face-smile.png");
-        final OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", inputStreamCreator);
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
+        
+        OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", a -> OutlookMessageMIMETest.class.getResourceAsStream("Face-smile.png"));
         inlineAttachment.setContentId(contentId);
+        
         message.addAttachment(inlineAttachment);
 
         // Multipart hierarchy should be:
         // mixed(related(alternative(plain, html), picture))
-        final MimeMessage mimeMessage = message.toMimeMessage();
+        MimeMessage mimeMessage = message.toMimeMessage();
         assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
-        final Object content = mimeMessage.getContent();
+        
+        Object content = mimeMessage.getContent();
         assertInstanceOf(MimeMultipart.class, content);
-        final MimeMultipart mixedMultipart = (MimeMultipart) content;
+        
+        MimeMultipart mixedMultipart = (MimeMultipart)content;
         assertEquals(1, mixedMultipart.getCount());
-        final BodyPart firstMixedBodyPart = mixedMultipart.getBodyPart(0);
+        
+        BodyPart firstMixedBodyPart = mixedMultipart.getBodyPart(0);
         assertTrue(firstMixedBodyPart.getDataHandler().getContentType().startsWith("multipart/related"));
-        final Object firstMixedBodyContent = firstMixedBodyPart.getContent();
+        
+        Object firstMixedBodyContent = firstMixedBodyPart.getContent();
         assertInstanceOf(MimeMultipart.class, firstMixedBodyContent);
-        final MimeMultipart relatedMultipart = (MimeMultipart) firstMixedBodyContent;
+        
+        MimeMultipart relatedMultipart = (MimeMultipart)firstMixedBodyContent;
         assertEquals(2, relatedMultipart.getCount());
-        final BodyPart firstRelatedBodyPart = relatedMultipart.getBodyPart(0);
+        
+        BodyPart firstRelatedBodyPart = relatedMultipart.getBodyPart(0);
         assertTrue(firstRelatedBodyPart.getDataHandler().getContentType().startsWith("multipart/alternative"));
+        
+        BodyPart secondRelatedBodyPart = relatedMultipart.getBodyPart(1);
+        assertTrue(secondRelatedBodyPart.getDataHandler().getContentType().startsWith("image/png"));
+    }
+    
+    @Test
+    public void plainAndHtmlMailWithInlineAttachments_shouldUseMultiPartRelatedWithoutAlternative() throws Exception {
+        final String contentId = UUID.randomUUID().toString();
+
+        OutlookMessage message = new OutlookMessage();
+        message.setSubject("This is a message");
+        message.setFrom("sender@jotlmsg.com");
+        message.setReplyTo(List.of("reply1@jotlmsg.com", "reply2@jotlmsg.com"));
+        message.setHtmlBody(String.format("<html><body><div>Inline attached smiley: <img src=\"cid:%s\" alt=\"Smiley\"></div></body></html>", contentId));
+        message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
+        
+        OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", a -> OutlookMessageMIMETest.class.getResourceAsStream("Face-smile.png"));
+        inlineAttachment.setContentId(contentId);
+        
+        message.addAttachment(inlineAttachment);
+
+        // Multipart hierarchy should be:
+        // mixed(related(alternative(plain, html), picture))
+        MimeMessage mimeMessage = message.toMimeMessage();
+        assertTrue(mimeMessage.getDataHandler().getContentType().startsWith("multipart/mixed"));
+        
+        Object content = mimeMessage.getContent();
+        assertInstanceOf(MimeMultipart.class, content);
+        
+        MimeMultipart mixedMultipart = (MimeMultipart)content;
+        assertEquals(1, mixedMultipart.getCount());
+        
+        BodyPart firstMixedBodyPart = mixedMultipart.getBodyPart(0);
+        assertTrue(firstMixedBodyPart.getDataHandler().getContentType().startsWith("multipart/related"));
+        
+        Object firstMixedBodyContent = firstMixedBodyPart.getContent();
+        assertInstanceOf(MimeMultipart.class, firstMixedBodyContent);
+        
+        MimeMultipart relatedMultipart = (MimeMultipart)firstMixedBodyContent;
+        assertEquals(2, relatedMultipart.getCount());
+        
+        BodyPart firstRelatedBodyPart = relatedMultipart.getBodyPart(0);
+        assertTrue(firstRelatedBodyPart.getDataHandler().getContentType().startsWith("text/html"));
+        
+        BodyPart secondRelatedBodyPart = relatedMultipart.getBodyPart(1);
+        assertTrue(secondRelatedBodyPart.getDataHandler().getContentType().startsWith("image/png"));
     }
 
     private static class CheckableInputStream extends InputStream {
