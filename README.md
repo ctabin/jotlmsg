@@ -84,6 +84,46 @@ message.addAttachment("hugeFile.zip", "application/zip", a -> new FileInputStrea
 List<OutlookMessageAttachment> attachments = message.getAttachments();
 ```
 
+### HTML message with inlined attachments
+
+The APIs allow to generate a message with embedded picture inside an HTML body that
+will then be editable directly in Outlook. The inlined attachment can be referenced
+by using the `cid:` prefix in a tag.
+
+```java
+//generated a unique content id to be referenced
+String contentId = UUID.randomUUID().toString();
+
+OutlookMessage message = new OutlookMessage();
+message.setSubject("My HTML message");
+message.setFrom("sender@jotlmsg.com");
+message.addRecipient(Type.TO, "cedric@jotlmsg.com", "Cédric");
+
+//optional alternative plain text message that can be shown if HTML is not displayed
+message.setPlainTextBody("Alternative plain text message");
+
+//defines the htmlbody with injected content id reference
+String htmlBody = """
+                  <html>
+                    <body>
+                      <div>
+                        Inline attached smiley:
+                        <img src="cid:%s" alt="Smiley">
+                      </div>
+                    </body>
+                  </html>
+                  """;
+message.setHtmlBody(String.format(htmlBody, contentId));
+
+//adds the inlined attachment with the referenced content id
+OutlookMessageAttachment inlineAttachment = new OutlookMessageAttachment("Face-smile.png", "image/png", a -> OutlookMessageMIMETest.class.getResourceAsStream("Face-smile.png"));
+inlineAttachment.setContentId(contentId);
+message.addAttachment(inlineAttachment);
+```
+
+**Note:** The inlined attachements are not shown as "real" attachment in Outlook. It's an alternative to external URLs that
+might be prevented to be loaded by the mail client of the final recipient.
+
 ## Limitations
 
 The current implementation allows to create simple msg files with many recipients (up to 2048) and attachments (up to 2048). 
