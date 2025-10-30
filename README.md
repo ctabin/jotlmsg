@@ -91,7 +91,7 @@ will then be editable directly in Outlook. The inlined attachment can be referen
 by using the `cid:` prefix in a tag.
 
 ```java
-//generated a unique content id to be referenced
+//generate a unique content id to be referenced
 String contentId = UUID.randomUUID().toString();
 
 OutlookMessage message = new OutlookMessage();
@@ -127,7 +127,7 @@ might be prevented to be loaded by the mail client of the final recipient.
 ## Limitations
 
 The current implementation allows to create simple msg files with many recipients (up to 2048) and attachments (up to 2048). 
-However, there is not current support of Microsoft Outlook advanced features like appointments or calendar integration, nor embedded messages.
+However, there is no current support of Microsoft Outlook advanced features like appointments or calendar integration, nor embedded messages.
 
 ## Donate
 
