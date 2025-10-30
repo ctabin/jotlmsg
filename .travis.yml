@@ -5,4 +5,4 @@ branches:
 language: java
 jdk: openjdk21
 install: true
-script: mvn clean package --settings m2-travis-settings.xml
+script: mvn clean package
