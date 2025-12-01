@@ -70,6 +70,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -594,7 +595,7 @@ public class OutlookMessage {
         topLevelChunk.setProperty(createBooleanPropertyValue(MAPIProperty.HASATTACH, !attachments.isEmpty()));
         if(sentDate==null) { topLevelChunk.setProperty(createLongPropertyValue(MAPIProperty.MESSAGE_FLAGS, 8)); } //mfUnsent - https://msdn.microsoft.com/en-us/library/ee160304(v=exchg.80).aspx
         else {
-            SimpleDateFormat mdf = new SimpleDateFormat(MIME_DATE_FORMAT);
+            SimpleDateFormat mdf = new SimpleDateFormat(MIME_DATE_FORMAT, Locale.ROOT);
             topLevelChunk.setProperty(createLongPropertyValue(MAPIProperty.MESSAGE_FLAGS, 2)); //mfUnmodified
             topLevelChunk.setProperty(createTimePropertyValue(MAPIProperty.CLIENT_SUBMIT_TIME, sentDate));
             topLevelChunk.setProperty(new PropertyValue(MAPIProperty.TRANSPORT_MESSAGE_HEADERS, FLAG_READABLE | FLAG_WRITEABLE, StringUtil.getToUnicodeLE("Date: "+mdf.format(sentDate))));
