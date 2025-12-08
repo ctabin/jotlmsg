@@ -23,7 +23,7 @@ If you're using maven, then simply add the following dependency:
 <dependency>
     <groupId>ch.astorm</groupId>
     <artifactId>jotlmsg</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
 </dependency>
 ```
 
